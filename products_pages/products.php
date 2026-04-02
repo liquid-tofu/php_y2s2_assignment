@@ -104,32 +104,32 @@ function display($conn) {
   $types  = "";
 
   if ($search != '') {
-    $where[]  = "name LIKE ?";
+    $where[]  = "p.name LIKE ?";
     $params[] = "%$search%";
     $types   .= "s";
   }
   if ($cat_id != '') {
-    $where[]  = "cat_id = ?";
+    $where[]  = "p.cat_id = ?";
     $params[] = $cat_id;
     $types   .= "i";
   }
   if ($from != '') {
-    $where[]  = "created_at >= ?";
+    $where[]  = "p.created_at >= ?";
     $params[] = $from;
     $types   .= "s";
   }
   if ($to != '') {
-    $where[]  = "created_at <= ?";
+    $where[]  = "p.created_at <= ?";
     $params[] = $to . " 23:59:59";
     $types   .= "s";
   }
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
-  $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql = "SELECT s.id, s.product_id, s.quantity, p.name as product_name 
-        FROM stock s 
-        JOIN products p ON s.product_id = p.id 
-        $whereClause $order_clause LIMIT $limit OFFSET $offset";
+  $order_clause = "ORDER BY p.$sort_by $sort_order";
+  $sql = "SELECT p.id, p.name, p.desc, p.price, p.cost, p.created_at, c.name as cat_name 
+          FROM products p 
+          LEFT JOIN categories c ON p.cat_id = c.id 
+          $whereClause $order_clause LIMIT $limit OFFSET $offset";
 
   $stmt = $conn->prepare($sql);
   if (!empty($params)) {
@@ -137,6 +137,12 @@ function display($conn) {
   }
   $stmt->execute();
   return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+}
+
+function getCategories($conn) {
+  $sql = "SELECT id, name FROM categories ORDER BY name";
+  $result = $conn->query($sql);
+  return $result->fetch_all(MYSQLI_ASSOC);
 }
 
 require('../components/header.php');
