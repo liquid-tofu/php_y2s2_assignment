@@ -126,24 +126,17 @@ function display($conn) {
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql          = "SELECT p.id, p.name, p.desc, p.price, p.cost, p.cat_id, p.created_at, c.name as cat_name 
-                   FROM products p 
-                   LEFT JOIN categories c ON p.cat_id = c.id 
-                   $whereClause $order_clause LIMIT ? OFFSET ?";
-  $params[]     = $limit;
-  $params[]     = $offset;
-  $types       .= "ii";
+  $sql = "SELECT s.id, s.product_id, s.quantity, p.name as product_name 
+        FROM stock s 
+        JOIN products p ON s.product_id = p.id 
+        $whereClause $order_clause LIMIT $limit OFFSET $offset";
 
   $stmt = $conn->prepare($sql);
-  $stmt->bind_param($types, ...$params);
+  if (!empty($params)) {
+      $stmt->bind_param($types, ...$params);
+  }
   $stmt->execute();
   return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-}
-
-function getCategories($conn) {
-  $sql = "SELECT id, name FROM categories ORDER BY name";
-  $result = $conn->query($sql);
-  return $result->fetch_all(MYSQLI_ASSOC);
 }
 
 require('../components/header.php');

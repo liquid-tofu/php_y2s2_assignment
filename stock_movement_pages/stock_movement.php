@@ -137,16 +137,15 @@ function display($conn) {
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql          = "SELECT sm.id, sm.product_id, sm.type, sm.quantity, sm.note, sm.created_at, p.name as product_name 
-                   FROM stock_movement sm 
-                   JOIN products p ON sm.product_id = p.id 
-                   $whereClause $order_clause LIMIT ? OFFSET ?";
-  $params[]     = $limit;
-  $params[]     = $offset;
-  $types       .= "ii";
+  $sql = "SELECT s.id, s.product_id, s.quantity, p.name as product_name 
+        FROM stock s 
+        JOIN products p ON s.product_id = p.id 
+        $whereClause $order_clause LIMIT $limit OFFSET $offset";
 
   $stmt = $conn->prepare($sql);
-  $stmt->bind_param($types, ...$params);
+  if (!empty($params)) {
+      $stmt->bind_param($types, ...$params);
+  }
   $stmt->execute();
   return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
