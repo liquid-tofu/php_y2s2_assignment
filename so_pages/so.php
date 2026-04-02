@@ -128,7 +128,7 @@ function display($conn) {
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql = "SELECT id, cus_name, cus_email, order_date, status, total_amount, created_at 
+  $sql = "SELECT id, cus_name, cus_email, order_date, status, total_amount
           FROM so 
           $whereClause $order_clause LIMIT $limit OFFSET $offset";
 
