@@ -221,4 +221,73 @@ body {
   justify-content: space-between;
 }
 
+/* pagination */
+#pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 20px;
+  gap: 20px;
+}
 
+#batch-btn {
+  display: flex;
+  font-family: "Inter Variable", sans-serif;
+  font-size: 14px;
+  gap: 7px;
+}
+
+#batch-btn button {
+  background: none;
+  border: none;
+  width: 35px;
+  aspect-ratio: 1;
+  border: 1px solid #fff;
+  border-radius: 7px;
+  color: #fff;
+}
+
+#batch-btn button.batch-active {
+  border: 2px solid #00BFCB;
+  color: #00BFCB;
+}
+
+#batch-btn button:hover {
+  background-color: #b4b4b4;
+}
+
+#per-page-select {
+  border: none;
+  background: none;
+}
+
+/* arrow */
+.arrow-container {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 5px;
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: middle;
+}
+
+.arrow-container .arrow-up,
+.arrow-container .arrow-down {
+  transition: fill 0.2s ease;
+}
+
+.arrow-container:hover .arrow-up,
+.arrow-container:hover .arrow-down {
+  fill: #00BFCB;
+}
+
+.arrow-container.active .arrow-up[fill="#00BFCB"],
+.arrow-container.active .arrow-down[fill="#00BFCB"] {
+  fill: #00BFCB;
+}
+
+#content-container {
+  overflow-x: auto;
+}
