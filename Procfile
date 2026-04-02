@@ -1,1 +1,0 @@
-web: php -d extension=mysqli -S 0.0.0.0:$PORT
