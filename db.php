@@ -48,6 +48,7 @@ class result_compat {
     private $stmt;
     public function __construct($stmt) { $this->stmt = $stmt; }
     public function fetch_assoc() { return $this->stmt->fetch(PDO::FETCH_ASSOC); }
+    public function fetch_row() { return $this->stmt->fetch(PDO::FETCH_NUM); }  // ← ADD THIS LINE
     public function fetch_all($mode = MYSQLI_ASSOC) { return $this->stmt->fetchAll(PDO::FETCH_ASSOC); }
     public function __get($name) {
         if ($name === 'num_rows') return $this->stmt->rowCount();
@@ -68,11 +69,11 @@ class stmt_compat {
 }
 
 $conn = new mysqli_compat(
-    getenv('MYSQLHOST'),
-    getenv('MYSQLUSER'),
-    getenv('MYSQLPASSWORD'),
-    getenv('MYSQLDATABASE'),
-    getenv('MYSQLPORT')
+    'crossover.proxy.rlwy.net',
+    'root',
+    'HsSaqkvbwlevrKyGuavIOVumwczGiAnY',
+    'railway',
+    28023
 );
 
 if($conn->connect_error){
