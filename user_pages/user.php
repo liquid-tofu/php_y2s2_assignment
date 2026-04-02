@@ -160,10 +160,7 @@ function display($conn) {
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql = "SELECT id, username, email, role, created_at FROM users $whereClause $order_clause LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
-  $params[]     = $limit;
-  $params[]     = $offset;
-  $types       .= "ii";
+  $sql          = "SELECT id, username, email, role, created_at FROM users $whereClause $order_clause LIMIT $limit OFFSET $offset";
 
   $stmt = $conn->prepare($sql);
   if (!empty($params)) {
