@@ -63,9 +63,9 @@ body {
   padding: 20px 0 20px 0;
 }
 
-#search-type *,
-#search-date *,
-#search * {
+#search-type > *,
+#search-date > *,
+#search > * {
   display: inline-block;
   font-size: 16px;
 }
@@ -297,11 +297,14 @@ body {
   table-layout: auto;
 }
 
-.action-buttons {
+td.action-buttons {
   display: flex;
   gap: 8px;
   white-space: nowrap;
-  min-width: 110px;
+  min-width: 120px;
+  padding: 4px 8px;
+  align-items: center;
+  border: 1px solid #fff;
 }
 
 /* Add button */
