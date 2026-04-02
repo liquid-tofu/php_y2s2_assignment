@@ -1,41 +1,21 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-  session_start();
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+  header("Location: login.php");
+  exit;
 }
 
 require('../db.php');
-
-if (!isset($_SESSION['user_id']) && isset($_COOKIE['user_id'])) {
-  $_SESSION['user_id'] = $_COOKIE['user_id'];
-  $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
-  $stmt->bind_param("i", $_SESSION['user_id']);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $user = $result->fetch_assoc();
-  if ($user) {
-    $_SESSION['username'] = $user['username'];
-    $_SESSION['role'] = $user['role'];
-  } else {
-    setcookie('user_id', '', time() - 3600, "/");
-    header("Location: ../login.php");
-    exit;
-  }
-}
-
-if (!isset($_SESSION['user_id'])) {
-  header("Location: ../login.php");
-  exit;
-}
 
 $per_page   = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
 $limit      = $per_page;
 $batch      = isset($_GET['batch'])    ? (int)$_GET['batch']    : 1;
 
-$type       = $_GET['type']       ?? $_POST['type']       ?? 'id';
 $search     = $_GET['search']     ?? $_POST['search']     ?? '';
-$role       = $_GET['role']       ?? $_POST['role']       ?? 'none';
-$from       = $_GET['from']       ?? $_POST['from']       ?? '';
-$to         = $_GET['to']         ?? $_POST['to']         ?? '';
+$status     = $_GET['status']     ?? $_POST['status']     ?? '';
+$from_date  = $_GET['from_date']  ?? $_POST['from_date']  ?? '';
+$to_date    = $_GET['to_date']    ?? $_POST['to_date']    ?? '';
 $sort_by    = $_GET['sort_by']    ?? $_POST['sort_by']    ?? '';
 $sort_order = $_GET['sort_order'] ?? $_POST['sort_order'] ?? '';
 
@@ -44,34 +24,28 @@ $countParams = [];
 $countTypes  = "";
 
 if ($search != '') {
-  if ($type == 'id') {
-    $countWhere[]  = "id = ?";
-    $countParams[] = $search;
-    $countTypes   .= "i";
-  } elseif ($type == 'euser') {
-    $countWhere[]  = "(username LIKE ? OR email LIKE ?)";
-    $countParams[] = "%$search%";
-    $countParams[] = "%$search%";
-    $countTypes   .= "ss";
-  }
+  $countWhere[]  = "(cus_name LIKE ? OR cus_email LIKE ?)";
+  $countParams[] = "%$search%";
+  $countParams[] = "%$search%";
+  $countTypes   .= "ss";
 }
-if ($role != 'none') {
-  $countWhere[]  = "role = ?";
-  $countParams[] = $role;
+if ($status != '') {
+  $countWhere[]  = "status = ?";
+  $countParams[] = $status;
   $countTypes   .= "s";
 }
-if ($from != '') {
-  $countWhere[]  = "created_at >= ?";
-  $countParams[] = $from;
+if ($from_date != '') {
+  $countWhere[]  = "order_date >= ?";
+  $countParams[] = $from_date;
   $countTypes   .= "s";
 }
-if ($to != '') {
-  $countWhere[]  = "created_at <= ?";
-  $countParams[] = $to . " 23:59:59";
+if ($to_date != '') {
+  $countWhere[]  = "order_date <= ?";
+  $countParams[] = $to_date;
   $countTypes   .= "s";
 }
 
-$countSql = "SELECT COUNT(*) FROM users";
+$countSql = "SELECT COUNT(*) FROM so";
 if (!empty($countWhere)) {
   $countSql .= " WHERE " . implode(" AND ", $countWhere);
 }
@@ -87,7 +61,7 @@ if ($batch > $end_batch && $end_batch > 0) {
   $batch = $end_batch;
 }
 
-$heads = ["#", "ID", "Username", "Email", "Role", "Created Time", "Actions"];
+$heads = ["#", "SO ID", "Customer Name", "Customer Email", "Order Date", "Status", "Total Amount", "Actions"];
 
 function batch_btns($batch, $end_batch) {
   $per_page = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
@@ -119,10 +93,10 @@ function batch_btns($batch, $end_batch) {
 }
 
 function display($conn) {
-  global $batch, $limit, $type, $search, $role, $from, $to, $sort_by, $sort_order;
+  global $batch, $limit, $search, $status, $from_date, $to_date, $sort_by, $sort_order;
   $offset = ($batch - 1) * $limit;
 
-  $allowed_sort = ['id', 'username', 'email', 'role', 'created_at'];
+  $allowed_sort = ['id', 'cus_name', 'order_date', 'status', 'total_amount'];
   $sort_by      = in_array($sort_by, $allowed_sort) ? $sort_by : 'id';
   $sort_order   = strtoupper($sort_order) === 'DESC' ? 'DESC' : 'ASC';
 
@@ -131,36 +105,32 @@ function display($conn) {
   $types  = "";
 
   if ($search != '') {
-    if ($type == 'id') {
-      $where[]  = "id = ?";
-      $params[] = $search;
-      $types   .= "i";
-    } elseif ($type == 'euser') {
-      $where[]  = "(username LIKE ? OR email LIKE ?)";
-      $params[] = "%$search%";
-      $params[] = "%$search%";
-      $types   .= "ss";
-    }
+    $where[]  = "(cus_name LIKE ? OR cus_email LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+    $types   .= "ss";
   }
-  if ($role != 'none') {
-    $where[]  = "role = ?";
-    $params[] = $role;
+  if ($status != '') {
+    $where[]  = "status = ?";
+    $params[] = $status;
     $types   .= "s";
   }
-  if ($from != '') {
-    $where[]  = "created_at >= ?";
-    $params[] = $from;
+  if ($from_date != '') {
+    $where[]  = "order_date >= ?";
+    $params[] = $from_date;
     $types   .= "s";
   }
-  if ($to != '') {
-    $where[]  = "created_at <= ?";
-    $params[] = $to . " 23:59:59";
+  if ($to_date != '') {
+    $where[]  = "order_date <= ?";
+    $params[] = $to_date;
     $types   .= "s";
   }
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql          = "SELECT id, username, email, role, created_at FROM users $whereClause $order_clause LIMIT ? OFFSET ?";
+  $sql          = "SELECT id, cus_name, cus_email, order_date, status, total_amount 
+                   FROM so 
+                   $whereClause $order_clause LIMIT ? OFFSET ?";
   $params[]     = $limit;
   $params[]     = $offset;
   $types       .= "ii";
@@ -171,12 +141,20 @@ function display($conn) {
   return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
 
+function getStatusBadge($status) {
+  $badges = [
+    'PENDING' => '<span class="status-pending">PENDING</span>',
+    'APPROVED' => '<span class="status-approved">APPROVED</span>',
+    'REJECTED' => '<span class="status-rejected">REJECTED</span>',
+    'CANCELLED' => '<span class="status-cancelled">CANCELLED</span>'
+  ];
+  return $badges[$status] ?? $status;
+}
+
 require('../components/header.php');
 ?>
 <link rel="stylesheet" href="/styles/content.css">
-<?php
-require('../components/sidebar.php');
-?>
+<?php require('../components/sidebar.php'); ?>
 
 <div class="main">
   <div class="topbar">
@@ -188,7 +166,7 @@ require('../components/sidebar.php');
 
   <div class="content">
     <div id="content-container">
-      <h3>User Management</h3>
+      <h3>Sales Orders</h3>
       <hr>
       <?php
       if (isset($_SESSION['message'])) {
@@ -197,25 +175,18 @@ require('../components/sidebar.php');
       }
       ?>
 
-      <form action="user.php" method="GET" id="search-form">
+      <form action="so.php" method="GET" id="search-form">
         <div id="search-container">
 
           <section id="search-type">
-            <label for="type">Search by</label>
+            <label for="status">Status</label>
             <div class="div-btn">
-              <select name="type" id="type">
-                <option value="id"    <?= ($type == 'id')    ? 'selected' : '' ?>>ID</option>
-                <option value="euser" <?= ($type == 'euser') ? 'selected' : '' ?>>Username &amp; Email</option>
-              </select>
-            </div>
-            <label for="role">Role</label>
-            <div class="div-btn">
-              <select name="role" id="role">
-                <option value="none"    <?= ($role == 'none')    ? 'selected' : '' ?>>None</option>
-                <option value="admin"   <?= ($role == 'admin')   ? 'selected' : '' ?>>Admin</option>
-                <option value="manager" <?= ($role == 'manager') ? 'selected' : '' ?>>Manager</option>
-                <option value="staff"   <?= ($role == 'staff')   ? 'selected' : '' ?>>Staff</option>
-                <option value="viewer"  <?= ($role == 'viewer')  ? 'selected' : '' ?>>Viewer</option>
+              <select name="status" id="status">
+                <option value="">All Status</option>
+                <option value="PENDING" <?= ($status == 'PENDING') ? 'selected' : '' ?>>PENDING</option>
+                <option value="APPROVED" <?= ($status == 'APPROVED') ? 'selected' : '' ?>>APPROVED</option>
+                <option value="REJECTED" <?= ($status == 'REJECTED') ? 'selected' : '' ?>>REJECTED</option>
+                <option value="CANCELLED" <?= ($status == 'CANCELLED') ? 'selected' : '' ?>>CANCELLED</option>
               </select>
             </div>
           </section>
@@ -223,17 +194,17 @@ require('../components/sidebar.php');
           <section id="search-date">
             <p>from</p>
             <div class="div-btn">
-              <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
+              <input type="date" name="from_date" value="<?= htmlspecialchars($from_date) ?>">
             </div>
             <p>to</p>
             <div class="div-btn">
-              <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
+              <input type="date" name="to_date" value="<?= htmlspecialchars($to_date) ?>">
             </div>
           </section>
 
           <section id="search">
             <input type="text" name="search" id="search-bar"
-                   placeholder="Search for..."
+                   placeholder="Search by customer name or email..."
                    value="<?= htmlspecialchars($search) ?>"
                    autocomplete="off"
                    onkeypress="handleEnter(event)">
@@ -256,11 +227,11 @@ require('../components/sidebar.php');
           <tr>
             <?php
             $col_map = [
-              'ID'           => 'id',
-              'Username'     => 'username',
-              'Email'        => 'email',
-              'Role'         => 'role',
-              'Created Time' => 'created_at',
+              'SO ID'        => 'id',
+              'Customer Name' => 'cus_name',
+              'Order Date'   => 'order_date',
+              'Status'       => 'status',
+              'Total Amount' => 'total_amount',
             ];
             $arrow_tpl = '
               <button type="button" class="arrow-container %s" onclick="sortColumn(\'%s\')">
@@ -271,7 +242,7 @@ require('../components/sidebar.php');
               </button>';
 
             foreach ($heads as $h => $col) {
-              if ($h === 0 || $col === 'Actions') {
+              if ($h === 0 || $col === 'Actions' || $col === 'Customer Email') {
                 echo "<th><div class='head'>$col</div></th>";
                 continue;
               }
@@ -291,25 +262,27 @@ require('../components/sidebar.php');
         </thead>
         <tbody>
           <?php
-          $users = display($conn);
-          if (empty($users)) {
-            echo "<tr><td colspan='7' style='padding: 20px; text-align: center; color: #aaa;'>No users found</td><tr>";
+          $orders = display($conn);
+          if (empty($orders)) {
+            echo "<tr><td colspan='8' style='padding: 20px; text-align: center; color: #aaa;'>No sales orders found</td></tr>";
           } else {
             $i = ($batch - 1) * $limit;
-            foreach ($users as $row) {
+            foreach ($orders as $row) {
               $i++;
               echo '<tr class="data-row">';
               echo "<td>$i</td>";
-              echo "<td>" . htmlspecialchars($row['id'])         . "</td>";
-              echo "<td>" . htmlspecialchars($row['username'])   . "</td>";
-              echo "<td>" . htmlspecialchars($row['email'])      . "</td>";
-              echo "<td>" . strtoupper($row['role'])             . "</td>";
-              echo "<td>" . htmlspecialchars($row['created_at']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['cus_name']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['cus_email']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['order_date']) . "</td>";
+              echo "<td>" . getStatusBadge($row['status']) . "</td>";
+              echo "<td>$" . number_format($row['total_amount'], 2) . "</td>";
               echo "<td class='action-buttons'>
-                      <a href='edituser.php?id={$row['id']}' class='edit-btn'>Edit</a>
-                      <a href='deleteuser.php?id={$row['id']}' class='delete-btn'
+                      <a href='viewso.php?id={$row['id']}' class='view-btn'>View</a>
+                      <a href='editso.php?id={$row['id']}' class='edit-btn'>Edit</a>
+                      <a href='deleteso.php?id={$row['id']}' class='delete-btn'
                          onclick='return confirm(\"Are you sure?\")'>Delete</a>
-                    </td>";
+                     </td>";
               echo "</tr>";
             }
           }
@@ -317,8 +290,8 @@ require('../components/sidebar.php');
         </tbody>
       </table>
 
-      <a href="adduser.php" class="add-btn">
-        <i class="bi bi-plus-circle"></i> Add New User
+      <a href="addso.php" class="add-btn">
+        <i class="bi bi-plus-circle"></i> Create Sales Order
       </a>
 
       <div id="pagination-container">
@@ -341,10 +314,9 @@ require('../components/sidebar.php');
 <script>
 const searchBar  = document.getElementById('search-bar');
 const clearBtn   = document.getElementById('clear');
-const typeSelect = document.getElementById('type');
-const roleSelect = document.getElementById('role');
-const fromDate   = document.querySelector('input[name="from"]');
-const toDate     = document.querySelector('input[name="to"]');
+const statusSelect = document.getElementById('status');
+const fromDate   = document.querySelector('input[name="from_date"]');
+const toDate     = document.querySelector('input[name="to_date"]');
 
 function checkClear() {
   clearBtn.style.display = searchBar.value !== '' ? 'block' : 'none';
@@ -353,31 +325,31 @@ searchBar.addEventListener('input', checkClear);
 checkClear();
 
 clearBtn.addEventListener('click', () => {
-  window.location.href = 'user.php';
+  window.location.href = 'so.php';
 });
 
-[typeSelect, roleSelect, fromDate, toDate].forEach(el => {
-  el.addEventListener('change', () => {
-    const params = new URLSearchParams();
-    params.set('type', typeSelect.value);
-    params.set('role', roleSelect.value);
-    if (fromDate.value) params.set('from', fromDate.value);
-    if (toDate.value) params.set('to', toDate.value);
-    if (searchBar.value) params.set('search', searchBar.value);
-    window.location.href = 'user.php?' + params.toString();
-  });
+[statusSelect, fromDate, toDate].forEach(el => {
+  if (el) {
+    el.addEventListener('change', () => {
+      const params = new URLSearchParams();
+      if (statusSelect.value) params.set('status', statusSelect.value);
+      if (fromDate.value) params.set('from_date', fromDate.value);
+      if (toDate.value) params.set('to_date', toDate.value);
+      if (searchBar.value) params.set('search', searchBar.value);
+      window.location.href = 'so.php?' + params.toString();
+    });
+  }
 });
 
 function handleEnter(e) {
   if (e.key === 'Enter') {
     e.preventDefault();
     const params = new URLSearchParams();
-    params.set('type', typeSelect.value);
-    params.set('role', roleSelect.value);
-    if (fromDate.value) params.set('from', fromDate.value);
-    if (toDate.value) params.set('to', toDate.value);
+    if (statusSelect.value) params.set('status', statusSelect.value);
+    if (fromDate.value) params.set('from_date', fromDate.value);
+    if (toDate.value) params.set('to_date', toDate.value);
     if (searchBar.value) params.set('search', searchBar.value);
-    window.location.href = 'user.php?' + params.toString();
+    window.location.href = 'so.php?' + params.toString();
   }
 }
 
@@ -385,13 +357,12 @@ function move_batch(batch, per_page) {
   const params = new URLSearchParams(window.location.search);
   params.set('batch', batch);
   params.set('per_page', per_page);
-  window.location.href = 'user.php?' + params.toString();
+  window.location.href = 'so.php?' + params.toString();
 }
 
 function sortColumn(displayName) {
   const map = {
-    'ID': 'id', 'Username': 'username',
-    'Email': 'email', 'Role': 'role', 'Created Time': 'created_at'
+    'SO ID': 'id', 'Customer Name': 'cus_name', 'Order Date': 'order_date', 'Status': 'status', 'Total Amount': 'total_amount'
   };
   const column  = map[displayName];
   const params  = new URLSearchParams(window.location.search);
@@ -411,7 +382,7 @@ function sortColumn(displayName) {
   }
   params.delete('batch');
   params.delete('per_page');
-  window.location.href = 'user.php?' + params.toString();
+  window.location.href = 'so.php?' + params.toString();
 }
 
 if (performance.navigation.type === 1) {
@@ -425,5 +396,51 @@ if (performance.navigation.type === 1) {
   }
 }
 </script>
+
+<style>
+.status-pending {
+  background: #ffc107;
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.status-approved {
+  background: #28a745;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.status-rejected {
+  background: #dc3545;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.status-cancelled {
+  background: #6c757d;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.view-btn {
+  background: #17a2b8;
+  color: white;
+  padding: 4px 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.view-btn:hover {
+  background: #138496;
+}
+</style>
 
 <?php require('../components/footer.php'); ?>

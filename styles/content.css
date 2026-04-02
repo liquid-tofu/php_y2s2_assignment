@@ -9,10 +9,8 @@
 
 body {
   display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background-color: gray;
+  align-items: flex-start;   /* IMPORTANT */
+  justify-content: flex-start; /* optional but safer */
 }
 
 @font-face {
@@ -352,3 +350,26 @@ td.action-buttons {
 .delete-btn:hover {
   background: #c0392b;
 }
+
+#clear {
+  display: none;
+}
+
+.popup-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #28a745;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  animation: fadeOut 3s forwards;
+  z-index: 1000;
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; display: none; }
+}
+

@@ -10,25 +10,30 @@
       <a href="/user_pages/user.php"><i class="bi bi-people"></i> <span>Users</span></a>
     </li>
     <li>
-      <a href="#"><i class="bi bi-box-seam"></i> <span>Products</span></a>
+      <a href="/products_pages/products.php"><i class="bi bi-box-seam"></i> <span>Products</span></a>
     </li>
     <li>
-      <a href="#"><i class="bi bi-truck"></i> <span>Suppliers</span></a>
+      <a href="/suppiers_pages/suppliers.php"><i class="bi bi-truck"></i> <span>Suppliers</span></a>
     </li>
     <li>
-      <a href="#"><i class="bi bi-tags"></i> <span>Categories</span></a>
+      <a href="/categories_pages/categories.php"><i class="bi bi-tags"></i> <span>Categories</span></a>
     </li>
     <li>
-      <a href="#"><i class="bi bi-arrow-left-right"></i> <span>Stock Movement</span></a>
+      <a href="/stock_movement_pages/stock_movement.php"><i class="bi bi-arrow-left-right"></i> <span>Stock Movement</span></a>
     </li>
     <li>
-      <a href="#"><i class="bi bi-box"></i> <span>Stock</span></a>
+      <a href="/stock_pages/stock.php"><i class="bi bi-box"></i> <span>Stock</span></a>
     </li>
     <li>
-      <a href="#"><i class="bi bi-cart"></i> <span>Purchase Order</span></a>
+      <a href="/po_pages/po.php"><i class="bi bi-cart"></i> <span>Purchase Order</span></a>
     </li>
     <li>
-      <a href="#"><i class="bi bi-receipt"></i> <span>Sales Order</span></a>
+      <a href="/so_pages/so.php"><i class="bi bi-receipt"></i> <span>Sales Order</span></a>
+    </li>
+    <li>
+      <a href="logout.php" class="logout-btn">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
     </li>
   </ul>
 </div>

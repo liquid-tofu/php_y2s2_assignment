@@ -1,41 +1,21 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-  session_start();
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+  header("Location: login.php");
+  exit;
 }
 
 require('../db.php');
-
-if (!isset($_SESSION['user_id']) && isset($_COOKIE['user_id'])) {
-  $_SESSION['user_id'] = $_COOKIE['user_id'];
-  $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
-  $stmt->bind_param("i", $_SESSION['user_id']);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $user = $result->fetch_assoc();
-  if ($user) {
-    $_SESSION['username'] = $user['username'];
-    $_SESSION['role'] = $user['role'];
-  } else {
-    setcookie('user_id', '', time() - 3600, "/");
-    header("Location: ../login.php");
-    exit;
-  }
-}
-
-if (!isset($_SESSION['user_id'])) {
-  header("Location: ../login.php");
-  exit;
-}
 
 $per_page   = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
 $limit      = $per_page;
 $batch      = isset($_GET['batch'])    ? (int)$_GET['batch']    : 1;
 
-$type       = $_GET['type']       ?? $_POST['type']       ?? 'id';
 $search     = $_GET['search']     ?? $_POST['search']     ?? '';
-$role       = $_GET['role']       ?? $_POST['role']       ?? 'none';
-$from       = $_GET['from']       ?? $_POST['from']       ?? '';
-$to         = $_GET['to']         ?? $_POST['to']         ?? '';
+$product_id = $_GET['product_id'] ?? $_POST['product_id'] ?? '';
+$min_qty    = $_GET['min_qty']    ?? $_POST['min_qty']    ?? '';
+$max_qty    = $_GET['max_qty']    ?? $_POST['max_qty']    ?? '';
 $sort_by    = $_GET['sort_by']    ?? $_POST['sort_by']    ?? '';
 $sort_order = $_GET['sort_order'] ?? $_POST['sort_order'] ?? '';
 
@@ -44,34 +24,27 @@ $countParams = [];
 $countTypes  = "";
 
 if ($search != '') {
-  if ($type == 'id') {
-    $countWhere[]  = "id = ?";
-    $countParams[] = $search;
-    $countTypes   .= "i";
-  } elseif ($type == 'euser') {
-    $countWhere[]  = "(username LIKE ? OR email LIKE ?)";
-    $countParams[] = "%$search%";
-    $countParams[] = "%$search%";
-    $countTypes   .= "ss";
-  }
-}
-if ($role != 'none') {
-  $countWhere[]  = "role = ?";
-  $countParams[] = $role;
+  $countWhere[]  = "p.name LIKE ?";
+  $countParams[] = "%$search%";
   $countTypes   .= "s";
 }
-if ($from != '') {
-  $countWhere[]  = "created_at >= ?";
-  $countParams[] = $from;
-  $countTypes   .= "s";
+if ($product_id != '') {
+  $countWhere[]  = "s.product_id = ?";
+  $countParams[] = $product_id;
+  $countTypes   .= "i";
 }
-if ($to != '') {
-  $countWhere[]  = "created_at <= ?";
-  $countParams[] = $to . " 23:59:59";
-  $countTypes   .= "s";
+if ($min_qty != '') {
+  $countWhere[]  = "s.quantity >= ?";
+  $countParams[] = $min_qty;
+  $countTypes   .= "i";
+}
+if ($max_qty != '') {
+  $countWhere[]  = "s.quantity <= ?";
+  $countParams[] = $max_qty;
+  $countTypes   .= "i";
 }
 
-$countSql = "SELECT COUNT(*) FROM users";
+$countSql = "SELECT COUNT(*) FROM stock s JOIN products p ON s.product_id = p.id";
 if (!empty($countWhere)) {
   $countSql .= " WHERE " . implode(" AND ", $countWhere);
 }
@@ -87,7 +60,7 @@ if ($batch > $end_batch && $end_batch > 0) {
   $batch = $end_batch;
 }
 
-$heads = ["#", "ID", "Username", "Email", "Role", "Created Time", "Actions"];
+$heads = ["#", "ID", "Product Name", "Quantity", "Actions"];
 
 function batch_btns($batch, $end_batch) {
   $per_page = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
@@ -119,11 +92,11 @@ function batch_btns($batch, $end_batch) {
 }
 
 function display($conn) {
-  global $batch, $limit, $type, $search, $role, $from, $to, $sort_by, $sort_order;
+  global $batch, $limit, $search, $product_id, $min_qty, $max_qty, $sort_by, $sort_order;
   $offset = ($batch - 1) * $limit;
 
-  $allowed_sort = ['id', 'username', 'email', 'role', 'created_at'];
-  $sort_by      = in_array($sort_by, $allowed_sort) ? $sort_by : 'id';
+  $allowed_sort = ['s.id', 'p.name', 's.quantity'];
+  $sort_by      = in_array($sort_by, $allowed_sort) ? $sort_by : 's.id';
   $sort_order   = strtoupper($sort_order) === 'DESC' ? 'DESC' : 'ASC';
 
   $where  = [];
@@ -131,36 +104,32 @@ function display($conn) {
   $types  = "";
 
   if ($search != '') {
-    if ($type == 'id') {
-      $where[]  = "id = ?";
-      $params[] = $search;
-      $types   .= "i";
-    } elseif ($type == 'euser') {
-      $where[]  = "(username LIKE ? OR email LIKE ?)";
-      $params[] = "%$search%";
-      $params[] = "%$search%";
-      $types   .= "ss";
-    }
-  }
-  if ($role != 'none') {
-    $where[]  = "role = ?";
-    $params[] = $role;
+    $where[]  = "p.name LIKE ?";
+    $params[] = "%$search%";
     $types   .= "s";
   }
-  if ($from != '') {
-    $where[]  = "created_at >= ?";
-    $params[] = $from;
-    $types   .= "s";
+  if ($product_id != '') {
+    $where[]  = "s.product_id = ?";
+    $params[] = $product_id;
+    $types   .= "i";
   }
-  if ($to != '') {
-    $where[]  = "created_at <= ?";
-    $params[] = $to . " 23:59:59";
-    $types   .= "s";
+  if ($min_qty != '') {
+    $where[]  = "s.quantity >= ?";
+    $params[] = $min_qty;
+    $types   .= "i";
+  }
+  if ($max_qty != '') {
+    $where[]  = "s.quantity <= ?";
+    $params[] = $max_qty;
+    $types   .= "i";
   }
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql          = "SELECT id, username, email, role, created_at FROM users $whereClause $order_clause LIMIT ? OFFSET ?";
+  $sql          = "SELECT s.id, s.product_id, s.quantity, p.name as product_name 
+                   FROM stock s 
+                   JOIN products p ON s.product_id = p.id 
+                   $whereClause $order_clause LIMIT ? OFFSET ?";
   $params[]     = $limit;
   $params[]     = $offset;
   $types       .= "ii";
@@ -171,12 +140,16 @@ function display($conn) {
   return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
 
+function getProducts($conn) {
+  $sql = "SELECT id, name FROM products ORDER BY name";
+  $result = $conn->query($sql);
+  return $result->fetch_all(MYSQLI_ASSOC);
+}
+
 require('../components/header.php');
 ?>
 <link rel="stylesheet" href="/styles/content.css">
-<?php
-require('../components/sidebar.php');
-?>
+<?php require('../components/sidebar.php'); ?>
 
 <div class="main">
   <div class="topbar">
@@ -188,7 +161,7 @@ require('../components/sidebar.php');
 
   <div class="content">
     <div id="content-container">
-      <h3>User Management</h3>
+      <h3>Stock Management</h3>
       <hr>
       <?php
       if (isset($_SESSION['message'])) {
@@ -197,43 +170,40 @@ require('../components/sidebar.php');
       }
       ?>
 
-      <form action="user.php" method="GET" id="search-form">
+      <form action="stock.php" method="GET" id="search-form">
         <div id="search-container">
 
           <section id="search-type">
-            <label for="type">Search by</label>
+            <label for="product_id">Product</label>
             <div class="div-btn">
-              <select name="type" id="type">
-                <option value="id"    <?= ($type == 'id')    ? 'selected' : '' ?>>ID</option>
-                <option value="euser" <?= ($type == 'euser') ? 'selected' : '' ?>>Username &amp; Email</option>
+              <select name="product_id" id="product_id">
+                <option value="">All Products</option>
+                <?php
+                $products = getProducts($conn);
+                foreach ($products as $prod) {
+                  $selected = ($product_id == $prod['id']) ? 'selected' : '';
+                  echo "<option value='{$prod['id']}' $selected>" . htmlspecialchars($prod['name']) . "</option>";
+                }
+                ?>
               </select>
             </div>
-            <label for="role">Role</label>
+            <label for="min_qty">Min Qty</label>
             <div class="div-btn">
-              <select name="role" id="role">
-                <option value="none"    <?= ($role == 'none')    ? 'selected' : '' ?>>None</option>
-                <option value="admin"   <?= ($role == 'admin')   ? 'selected' : '' ?>>Admin</option>
-                <option value="manager" <?= ($role == 'manager') ? 'selected' : '' ?>>Manager</option>
-                <option value="staff"   <?= ($role == 'staff')   ? 'selected' : '' ?>>Staff</option>
-                <option value="viewer"  <?= ($role == 'viewer')  ? 'selected' : '' ?>>Viewer</option>
-              </select>
+              <input type="number" name="min_qty" id="min_qty" value="<?= htmlspecialchars($min_qty) ?>" placeholder="Min">
+            </div>
+            <label for="max_qty">Max Qty</label>
+            <div class="div-btn">
+              <input type="number" name="max_qty" id="max_qty" value="<?= htmlspecialchars($max_qty) ?>" placeholder="Max">
             </div>
           </section>
 
           <section id="search-date">
-            <p>from</p>
-            <div class="div-btn">
-              <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
-            </div>
-            <p>to</p>
-            <div class="div-btn">
-              <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
-            </div>
+            <!-- Empty to keep layout -->
           </section>
 
           <section id="search">
             <input type="text" name="search" id="search-bar"
-                   placeholder="Search for..."
+                   placeholder="Search by product name..."
                    value="<?= htmlspecialchars($search) ?>"
                    autocomplete="off"
                    onkeypress="handleEnter(event)">
@@ -256,11 +226,9 @@ require('../components/sidebar.php');
           <tr>
             <?php
             $col_map = [
-              'ID'           => 'id',
-              'Username'     => 'username',
-              'Email'        => 'email',
-              'Role'         => 'role',
-              'Created Time' => 'created_at',
+              'ID'           => 's.id',
+              'Product Name' => 'p.name',
+              'Quantity'     => 's.quantity',
             ];
             $arrow_tpl = '
               <button type="button" class="arrow-container %s" onclick="sortColumn(\'%s\')">
@@ -291,34 +259,33 @@ require('../components/sidebar.php');
         </thead>
         <tbody>
           <?php
-          $users = display($conn);
-          if (empty($users)) {
-            echo "<tr><td colspan='7' style='padding: 20px; text-align: center; color: #aaa;'>No users found</td><tr>";
+          $stock = display($conn);
+          if (empty($stock)) {
+            echo "<tr><td colspan='4' style='padding: 20px; text-align: center; color: #aaa;'>No stock records found</td></tr>";
           } else {
             $i = ($batch - 1) * $limit;
-            foreach ($users as $row) {
+            foreach ($stock as $row) {
               $i++;
+              $qty_class = $row['quantity'] <= 5 ? 'stock-low' : '';
               echo '<tr class="data-row">';
               echo "<td>$i</td>";
-              echo "<td>" . htmlspecialchars($row['id'])         . "</td>";
-              echo "<td>" . htmlspecialchars($row['username'])   . "</td>";
-              echo "<td>" . htmlspecialchars($row['email'])      . "</td>";
-              echo "<td>" . strtoupper($row['role'])             . "</td>";
-              echo "<td>" . htmlspecialchars($row['created_at']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['product_name']) . "</td>";
+              echo "<td class='$qty_class'>" . htmlspecialchars($row['quantity']) . "</td>";
               echo "<td class='action-buttons'>
-                      <a href='edituser.php?id={$row['id']}' class='edit-btn'>Edit</a>
-                      <a href='deleteuser.php?id={$row['id']}' class='delete-btn'
+                      <a href='editstock.php?id={$row['id']}' class='edit-btn'>Edit</a>
+                      <a href='deletestock.php?id={$row['id']}' class='delete-btn'
                          onclick='return confirm(\"Are you sure?\")'>Delete</a>
-                    </td>";
+                     </td>";
               echo "</tr>";
             }
           }
           ?>
         </tbody>
-      </table>
+       </table>
 
-      <a href="adduser.php" class="add-btn">
-        <i class="bi bi-plus-circle"></i> Add New User
+      <a href="addstock.php" class="add-btn">
+        <i class="bi bi-plus-circle"></i> Add Stock Record
       </a>
 
       <div id="pagination-container">
@@ -341,10 +308,9 @@ require('../components/sidebar.php');
 <script>
 const searchBar  = document.getElementById('search-bar');
 const clearBtn   = document.getElementById('clear');
-const typeSelect = document.getElementById('type');
-const roleSelect = document.getElementById('role');
-const fromDate   = document.querySelector('input[name="from"]');
-const toDate     = document.querySelector('input[name="to"]');
+const productSelect = document.getElementById('product_id');
+const minQty     = document.getElementById('min_qty');
+const maxQty     = document.getElementById('max_qty');
 
 function checkClear() {
   clearBtn.style.display = searchBar.value !== '' ? 'block' : 'none';
@@ -353,31 +319,31 @@ searchBar.addEventListener('input', checkClear);
 checkClear();
 
 clearBtn.addEventListener('click', () => {
-  window.location.href = 'user.php';
+  window.location.href = 'stock.php';
 });
 
-[typeSelect, roleSelect, fromDate, toDate].forEach(el => {
-  el.addEventListener('change', () => {
-    const params = new URLSearchParams();
-    params.set('type', typeSelect.value);
-    params.set('role', roleSelect.value);
-    if (fromDate.value) params.set('from', fromDate.value);
-    if (toDate.value) params.set('to', toDate.value);
-    if (searchBar.value) params.set('search', searchBar.value);
-    window.location.href = 'user.php?' + params.toString();
-  });
+[productSelect, minQty, maxQty].forEach(el => {
+  if (el) {
+    el.addEventListener('change', () => {
+      const params = new URLSearchParams();
+      if (productSelect.value) params.set('product_id', productSelect.value);
+      if (minQty.value) params.set('min_qty', minQty.value);
+      if (maxQty.value) params.set('max_qty', maxQty.value);
+      if (searchBar.value) params.set('search', searchBar.value);
+      window.location.href = 'stock.php?' + params.toString();
+    });
+  }
 });
 
 function handleEnter(e) {
   if (e.key === 'Enter') {
     e.preventDefault();
     const params = new URLSearchParams();
-    params.set('type', typeSelect.value);
-    params.set('role', roleSelect.value);
-    if (fromDate.value) params.set('from', fromDate.value);
-    if (toDate.value) params.set('to', toDate.value);
+    if (productSelect.value) params.set('product_id', productSelect.value);
+    if (minQty.value) params.set('min_qty', minQty.value);
+    if (maxQty.value) params.set('max_qty', maxQty.value);
     if (searchBar.value) params.set('search', searchBar.value);
-    window.location.href = 'user.php?' + params.toString();
+    window.location.href = 'stock.php?' + params.toString();
   }
 }
 
@@ -385,13 +351,12 @@ function move_batch(batch, per_page) {
   const params = new URLSearchParams(window.location.search);
   params.set('batch', batch);
   params.set('per_page', per_page);
-  window.location.href = 'user.php?' + params.toString();
+  window.location.href = 'stock.php?' + params.toString();
 }
 
 function sortColumn(displayName) {
   const map = {
-    'ID': 'id', 'Username': 'username',
-    'Email': 'email', 'Role': 'role', 'Created Time': 'created_at'
+    'ID': 's.id', 'Product Name': 'p.name', 'Quantity': 's.quantity'
   };
   const column  = map[displayName];
   const params  = new URLSearchParams(window.location.search);
@@ -411,7 +376,7 @@ function sortColumn(displayName) {
   }
   params.delete('batch');
   params.delete('per_page');
-  window.location.href = 'user.php?' + params.toString();
+  window.location.href = 'stock.php?' + params.toString();
 }
 
 if (performance.navigation.type === 1) {
@@ -425,5 +390,12 @@ if (performance.navigation.type === 1) {
   }
 }
 </script>
+
+<style>
+.stock-low {
+  color: #dc3545;
+  font-weight: bold;
+}
+</style>
 
 <?php require('../components/footer.php'); ?>
