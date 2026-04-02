@@ -160,13 +160,15 @@ function display($conn) {
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql          = "SELECT id, username, email, role, created_at FROM users $whereClause $order_clause LIMIT ? OFFSET ?";
+  $sql = "SELECT id, username, email, role, created_at FROM users $whereClause $order_clause LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
   $params[]     = $limit;
   $params[]     = $offset;
   $types       .= "ii";
 
   $stmt = $conn->prepare($sql);
-  $stmt->bind_param($types, ...$params);
+  if (!empty($params)) {
+      $stmt->bind_param($types, ...$params);
+  }
   $stmt->execute();
   return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }

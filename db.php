@@ -54,7 +54,6 @@ class result_compat {
         if ($name === 'num_rows') return $this->stmt->rowCount();
     }
 }
-
 class stmt_compat {
     private $stmt;
     public function __construct($stmt) { $this->stmt = $stmt; }
