@@ -86,7 +86,7 @@ function batch_btns($batch, $end_batch) {
 }
 
 function display($conn) {
-  global $batch, $limit, $search, $from, $to, $sort_by, $sort_order;
+  global $batch, $limit, $search, $sort_by, $sort_order;
   $offset = ($batch - 1) * $limit;
 
   $allowed_sort = ['id', 'name', 'created_at'];
@@ -102,23 +102,10 @@ function display($conn) {
     $params[] = "%$search%";
     $types   .= "s";
   }
-  if ($from != '') {
-    $where[]  = "created_at >= ?";
-    $params[] = $from;
-    $types   .= "s";
-  }
-  if ($to != '') {
-    $where[]  = "created_at <= ?";
-    $params[] = $to . " 23:59:59";
-    $types   .= "s";
-  }
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql = "SELECT s.id, s.product_id, s.quantity, p.name as product_name 
-        FROM stock s 
-        JOIN products p ON s.product_id = p.id 
-        $whereClause $order_clause LIMIT $limit OFFSET $offset";
+  $sql = "SELECT id, name, `desc`, created_at FROM categories $whereClause $order_clause LIMIT $limit OFFSET $offset";
 
   $stmt = $conn->prepare($sql);
   if (!empty($params)) {
@@ -235,14 +222,14 @@ require('../components/header.php');
             $i = ($batch - 1) * $limit;
             foreach ($categories as $row) {
               $i++;
-              $desc = htmlspecialchars($row['desc']);
+              $desc = htmlspecialchars($row['desc'] ?? '');
               $desc = strlen($desc) > 100 ? substr($desc, 0, 100) . '...' : $desc;
               echo '<tr class="data-row">';
               echo "<td>$i</td>";
-              echo "<td>" . htmlspecialchars($row['id']) . "</td>";
-              echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['id'] ?? '') . "</td>";
+              echo "<td>" . htmlspecialchars($row['name'] ?? '') . "</td>";
               echo "<td>$desc</td>";
-              echo "<td>" . htmlspecialchars($row['created_at']) . "</td>";
+              echo "<td>" . htmlspecialchars($row['created_at'] ?? '') . "</td>";
               echo "<td class='action-buttons'>
                       <a href='editcategory.php?id={$row['id']}' class='edit-btn'>Edit</a>
                       <a href='deletecategory.php?id={$row['id']}' class='delete-btn'
