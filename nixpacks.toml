@@ -1,5 +1,15 @@
 [phases.setup]
-nixPkgs = ["php82", "php82Extensions.mysqli", "php82Extensions.pdo_mysql", "apacheHttpd"]
+nixPkgs = ["php82", "php82Extensions.mysqli", "php82Extensions.pdo_mysql"]
+
+[phases.build]
+cmds = ["mkdir -p /etc/php82/conf.d && echo 'extension=mysqli' > /etc/php82/conf.d/mysqli.ini"]
 
 [start]
 cmd = "php -d extension=mysqli -S 0.0.0.0:$PORT"
+```
+
+---
+
+Also update your `Procfile` to just:
+```
+web: php -d extension=mysqli -S 0.0.0.0:$PORT
