@@ -198,13 +198,6 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-family: "Inter Variable", sans-serif;
-  table-layout: auto;
-}
-
-#content-table th:last-child,
-#content-table td:last-child {
-  width: 150px;
-  min-width: 150px;
 }
 
 .data-row {
@@ -300,14 +293,18 @@ body {
   overflow-y: visible;
 }
 
+#content-table {
+  table-layout: auto;
+}
+
 td.action-buttons {
   display: flex;
   gap: 8px;
   white-space: nowrap;
-  width: 150px;
-  min-width: 150px;
+  min-width: 120px;
   padding: 4px 8px;
   align-items: center;
+  border: 1px solid #fff;
 }
 
 /* Add button */
