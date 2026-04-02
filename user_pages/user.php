@@ -146,225 +146,229 @@ function display($conn) {
   $stmt->execute();
   return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
+
+require('../components/header.php');
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Management</title>
-  <link rel="icon" href="/resources/Logo.ico">
-  <meta name="description" content="Managing your stock's user accounts.">
-  <meta name="keywords" content="user, stock, order, sale">
-  <link rel="stylesheet" href="/styles/content.css">
-</head>
-<body>
-  <div id="content-container">
-    <h3>User Management</h3>
-    <hr>
+<link rel="stylesheet" href="/styles/content.css">
+<?php
+require('../components/sidebar.php');
+?>
 
-    <!-- Search Form -->
-    <form action="user.php" method="GET" id="search-form">
-      <div id="search-container">
+<div class="main">
+  <div class="topbar">
+    <h3>Stock Management System</h3>
+    <div class="user">
+      <i class="bi bi-person-circle"></i> Administrator
+    </div>
+  </div>
 
-        <section id="search-type">
-          <label for="type">Search by</label>
-          <div class="div-btn">
-            <select name="type" id="type">
-              <option value="id"    <?= ($type == 'id')    ? 'selected' : '' ?>>ID</option>
-              <option value="euser" <?= ($type == 'euser') ? 'selected' : '' ?>>Username &amp; Email</option>
-            </select>
-          </div>
-          <label for="role">Role</label>
-          <div class="div-btn">
-            <select name="role" id="role">
-              <option value="none"    <?= ($role == 'none')    ? 'selected' : '' ?>>None</option>
-              <option value="admin"   <?= ($role == 'admin')   ? 'selected' : '' ?>>Admin</option>
-              <option value="manager" <?= ($role == 'manager') ? 'selected' : '' ?>>Manager</option>
-              <option value="staff"   <?= ($role == 'staff')   ? 'selected' : '' ?>>Staff</option>
-              <option value="viewer"  <?= ($role == 'viewer')  ? 'selected' : '' ?>>Viewer</option>
-            </select>
-          </div>
-        </section>
+  <div class="content">
+    <div id="content-container">
+      <h3>User Management</h3>
+      <hr>
 
-        <section id="search-date">
-          <p>from</p>
-          <div class="div-btn">
-            <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
-          </div>
-          <p>to</p>
-          <div class="div-btn">
-            <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
-          </div>
-        </section>
+      <!-- Search Form -->
+      <form action="user.php" method="GET" id="search-form">
+        <div id="search-container">
 
-        <section id="search">
-          <input type="text" name="search" id="search-bar"
-                 placeholder="Search for..."
-                 value="<?= htmlspecialchars($search) ?>"
-                 autocomplete="off"
-                 onkeypress="handleEnter(event)">
-          <button type="button" id="clear">Clear</button>
-          <button type="submit" name="submit" id="submit">
-            <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-              <path d="M16 24c4.4183 0 8-3.5817 8-8 0-4.4183-3.5817-8-8-8-4.4183 0-8 3.5817-8 8 0 4.4183 3.5817 8 8 8z"
-                    stroke="#e2e2e2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M26.0001 26.0004l-4.35-4.35"
-                    stroke="#e2e2e2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </section>
+          <section id="search-type">
+            <label for="type">Search by</label>
+            <div class="div-btn">
+              <select name="type" id="type">
+                <option value="id"    <?= ($type == 'id')    ? 'selected' : '' ?>>ID</option>
+                <option value="euser" <?= ($type == 'euser') ? 'selected' : '' ?>>Username &amp; Email</option>
+              </select>
+            </div>
+            <label for="role">Role</label>
+            <div class="div-btn">
+              <select name="role" id="role">
+                <option value="none"    <?= ($role == 'none')    ? 'selected' : '' ?>>None</option>
+                <option value="admin"   <?= ($role == 'admin')   ? 'selected' : '' ?>>Admin</option>
+                <option value="manager" <?= ($role == 'manager') ? 'selected' : '' ?>>Manager</option>
+                <option value="staff"   <?= ($role == 'staff')   ? 'selected' : '' ?>>Staff</option>
+                <option value="viewer"  <?= ($role == 'viewer')  ? 'selected' : '' ?>>Viewer</option>
+              </select>
+            </div>
+          </section>
 
-      </div>
-    </form>
+          <section id="search-date">
+            <p>from</p>
+            <div class="div-btn">
+              <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
+            </div>
+            <p>to</p>
+            <div class="div-btn">
+              <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
+            </div>
+          </section>
 
-    <!-- Table -->
-    <table id="content-table">
-      <thead>
-        <tr>
-          <?php
-          $col_map = [
-            'ID'           => 'id',
-            'Username'     => 'username',
-            'Email'        => 'email',
-            'Role'         => 'role',
-            'Created Time' => 'created_at',
-          ];
-          $arrow_tpl = '
-            <button type="button" class="arrow-container %s" onclick="sortColumn(\'%s\')">
-              <svg class="arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">
-                <path class="arrow-up"   d="M0 5H3L3 16H5L5 5L8 5V4L4 0L0 4V5Z"            fill="%s"/>
-                <path class="arrow-down" d="M8 11L11 11L11 0H13L13 11H16V12L12 16L8 12V11Z" fill="%s"/>
+          <section id="search">
+            <input type="text" name="search" id="search-bar"
+                   placeholder="Search for..."
+                   value="<?= htmlspecialchars($search) ?>"
+                   autocomplete="off"
+                   onkeypress="handleEnter(event)">
+            <button type="button" id="clear">Clear</button>
+            <button type="submit" name="submit" id="submit">
+              <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+                <path d="M16 24c4.4183 0 8-3.5817 8-8 0-4.4183-3.5817-8-8-8-4.4183 0-8 3.5817-8 8 0 4.4183 3.5817 8 8 8z"
+                      stroke="#e2e2e2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M26.0001 26.0004l-4.35-4.35"
+                      stroke="#e2e2e2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-            </button>';
+            </button>
+          </section>
 
-          foreach ($heads as $h => $col) {
-            if ($h === 0 || $col === 'Actions') {
-              echo "<th><div class='head'>$col</div></th>";
-              continue;
+        </div>
+      </form>
+
+      <!-- Table -->
+      <table id="content-table">
+        <thead>
+          <tr>
+            <?php
+            $col_map = [
+              'ID'           => 'id',
+              'Username'     => 'username',
+              'Email'        => 'email',
+              'Role'         => 'role',
+              'Created Time' => 'created_at',
+            ];
+            $arrow_tpl = '
+              <button type="button" class="arrow-container %s" onclick="sortColumn(\'%s\')">
+                <svg class="arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">
+                  <path class="arrow-up"   d="M0 5H3L3 16H5L5 5L8 5V4L4 0L0 4V5Z"            fill="%s"/>
+                  <path class="arrow-down" d="M8 11L11 11L11 0H13L13 11H16V12L12 16L8 12V11Z" fill="%s"/>
+                </svg>
+              </button>';
+
+            foreach ($heads as $h => $col) {
+              if ($h === 0 || $col === 'Actions') {
+                echo "<th><div class='head'>$col</div></th>";
+                continue;
+              }
+              $db_col   = $col_map[$col] ?? '';
+              $cls      = '';
+              $up_col   = '#fff';
+              $down_col = '#fff';
+              if ($db_col === $sort_by) {
+                $cls      = 'active';
+                $up_col   = ($sort_order === 'ASC')  ? '#00BFCB' : '#fff';
+                $down_col = ($sort_order === 'DESC') ? '#00BFCB' : '#fff';
+              }
+              echo "<th><div class='head'>$col" . sprintf($arrow_tpl, $cls, $col, $up_col, $down_col) . "</div></th>";
             }
-            $db_col   = $col_map[$col] ?? '';
-            $cls      = '';
-            $up_col   = '#fff';
-            $down_col = '#fff';
-            if ($db_col === $sort_by) {
-              $cls      = 'active';
-              $up_col   = ($sort_order === 'ASC')  ? '#00BFCB' : '#fff';
-              $down_col = ($sort_order === 'DESC') ? '#00BFCB' : '#fff';
+            ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+          $users = display($conn);
+          if (empty($users)) {
+            echo "<tr><td colspan='7' style='padding: 20px; text-align: center; color: #aaa;'>No users found</td></tr>";
+          } else {
+            $i = ($batch - 1) * $limit;
+            foreach ($users as $row) {
+              $i++;
+              echo '<tr class="data-row">';
+              echo "<td>$i</td>";
+              echo "<td>" . htmlspecialchars($row['id'])         . "</td>";
+              echo "<td>" . htmlspecialchars($row['username'])   . "</td>";
+              echo "<td>" . htmlspecialchars($row['email'])      . "</td>";
+              echo "<td>" . strtoupper($row['role'])             . "</td>";
+              echo "<td>" . htmlspecialchars($row['created_at']) . "</td>";
+              echo "<td class='action-buttons'>
+                      <a href='edituser.php?id={$row['id']}' class='edit-btn'>Edit</a>
+                      <a href='deleteuser.php?id={$row['id']}' class='delete-btn'
+                         onclick='return confirm(\"Are you sure?\")'>Delete</a>
+                    </td>";
+              echo "</tr>";
             }
-            echo "<th><div class='head'>$col" . sprintf($arrow_tpl, $cls, $col, $up_col, $down_col) . "</div></th>";
           }
           ?>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        $users = display($conn);
-        if (empty($users)) {
-          echo "<tr><td colspan='7' style='padding: 20px; text-align: center;'>No users found</td></tr>";
-        } else {
-          $i = ($batch - 1) * $limit;
-          foreach ($users as $row) {
-            $i++;
-            echo '<tr class="data-row">';
-            echo "<td>$i</td>";
-            echo "<td>" . htmlspecialchars($row['id'])         . "</td>";
-            echo "<td>" . htmlspecialchars($row['username'])   . "</td>";
-            echo "<td>" . htmlspecialchars($row['email'])      . "</td>";
-            echo "<td>" . strtoupper($row['role'])             . "</td>";
-            echo "<td>" . htmlspecialchars($row['created_at']) . "</td>";
-            echo "<td class='action-buttons'>
-                    <a href='edituser.php?id={$row['id']}' class='edit-btn'>Edit</a>
-                    <a href='deleteuser.php?id={$row['id']}' class='delete-btn'
-                       onclick='return confirm(\"Are you sure?\")'>Delete</a>
-                  </td>";
-            echo "</tr>";
-          }
-        }
-        ?>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
 
-    <!-- Add Button -->
-    <div style="margin: 20px 0;">
+      <!-- Add Button -->
       <a href="adduser.php" class="add-btn">
         <i class="bi bi-plus-circle"></i> Add New User
       </a>
-    </div>
 
-    <!-- Pagination -->
-    <div id="pagination-container">
-      <?php
-      if ($count > 0) {
-        $start = ($batch - 1) * $limit + 1;
-        $end   = min($batch * $limit, $count);
-        echo "<p>{$start}-{$end} of {$count}</p>";
-      } else {
-        echo "<p>0 results</p>";
-      }
-      batch_btns($batch, $end_batch);
-      ?>
-    </div>
+      <!-- Pagination -->
+      <div id="pagination-container">
+        <?php
+        if ($count > 0) {
+          $start = ($batch - 1) * $limit + 1;
+          $end   = min($batch * $limit, $count);
+          echo "<p>{$start}-{$end} of {$count}</p>";
+        } else {
+          echo "<p>0 results</p>";
+        }
+        batch_btns($batch, $end_batch);
+        ?>
+      </div>
 
-  </div><!-- #content-container -->
+    </div><!-- #content-container -->
+  </div><!-- .content -->
+</div><!-- .main -->
 
-  <script>
-  const searchBar  = document.getElementById('search-bar');
-  const clearBtn   = document.getElementById('clear');
-  const typeSelect = document.getElementById('type');
-  const roleSelect = document.getElementById('role');
-  const fromDate   = document.querySelector('input[name="from"]');
-  const toDate     = document.querySelector('input[name="to"]');
+<script>
+const searchBar  = document.getElementById('search-bar');
+const clearBtn   = document.getElementById('clear');
+const typeSelect = document.getElementById('type');
+const roleSelect = document.getElementById('role');
+const fromDate   = document.querySelector('input[name="from"]');
+const toDate     = document.querySelector('input[name="to"]');
 
-  function checkClear() {
-    clearBtn.style.display = searchBar.value !== '' ? 'block' : 'none';
-  }
-  searchBar.addEventListener('input', checkClear);
+function checkClear() {
+  clearBtn.style.display = searchBar.value !== '' ? 'block' : 'none';
+}
+searchBar.addEventListener('input', checkClear);
+checkClear();
+
+clearBtn.addEventListener('click', () => {
+  searchBar.value = '';
   checkClear();
+  searchBar.focus();
+});
 
-  clearBtn.addEventListener('click', () => {
-    searchBar.value = '';
-    checkClear();
-    searchBar.focus();
-  });
+[typeSelect, roleSelect, fromDate, toDate].forEach(el => {
+  el.addEventListener('change', () => document.getElementById('search-form').requestSubmit());
+});
 
-  [typeSelect, roleSelect, fromDate, toDate].forEach(el => {
-    el.addEventListener('change', () => document.getElementById('search-form').requestSubmit());
-  });
-
-  function handleEnter(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.getElementById('search-form').requestSubmit();
-    }
+function handleEnter(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('search-form').requestSubmit();
   }
+}
 
-  function move_batch(batch, per_page) {
-    const params = new URLSearchParams(window.location.search);
-    params.set('batch', batch);
-    params.set('per_page', per_page);
-    window.location.href = '?' + params.toString();
-  }
+function move_batch(batch, per_page) {
+  const params = new URLSearchParams(window.location.search);
+  params.set('batch', batch);
+  params.set('per_page', per_page);
+  window.location.href = '?' + params.toString();
+}
 
-  function sortColumn(displayName) {
-    const map = {
-      'ID': 'id', 'Username': 'username',
-      'Email': 'email', 'Role': 'role', 'Created Time': 'created_at'
-    };
-    const column  = map[displayName];
-    const params  = new URLSearchParams(window.location.search);
-    const curSort = params.get('sort_by')    || '';
-    const curOrd  = params.get('sort_order') || '';
+function sortColumn(displayName) {
+  const map = {
+    'ID': 'id', 'Username': 'username',
+    'Email': 'email', 'Role': 'role', 'Created Time': 'created_at'
+  };
+  const column  = map[displayName];
+  const params  = new URLSearchParams(window.location.search);
+  const curSort = params.get('sort_by')    || '';
+  const curOrd  = params.get('sort_order') || '';
 
-    let newSort = '', newOrder = '';
-    if (curSort !== column)     { newSort = column; newOrder = 'DESC'; }
-    else if (curOrd === 'DESC') { newSort = column; newOrder = 'ASC'; }
+  let newSort = '', newOrder = '';
+  if (curSort !== column)     { newSort = column; newOrder = 'DESC'; }
+  else if (curOrd === 'DESC') { newSort = column; newOrder = 'ASC'; }
 
-    if (newSort) { params.set('sort_by', newSort); params.set('sort_order', newOrder); }
-    else         { params.delete('sort_by'); params.delete('sort_order'); }
-    params.set('batch', 1);
-    window.location.href = '?' + params.toString();
-  }
-  </script>
-</body>
-</html>
+  if (newSort) { params.set('sort_by', newSort); params.set('sort_order', newOrder); }
+  else         { params.delete('sort_by'); params.delete('sort_order'); }
+  params.set('batch', 1);
+  window.location.href = '?' + params.toString();
+}
+</script>
+
+<?php require('../components/footer.php'); ?>

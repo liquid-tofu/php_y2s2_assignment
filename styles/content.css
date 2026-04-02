@@ -198,6 +198,13 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-family: "Inter Variable", sans-serif;
+  table-layout: auto;
+}
+
+#content-table th:last-child,
+#content-table td:last-child {
+  width: 150px;
+  min-width: 150px;
 }
 
 .data-row {
@@ -293,18 +300,10 @@ body {
   overflow-y: visible;
 }
 
-#content-table {
-  table-layout: auto;
-}
-
 td.action-buttons {
-  display: flex;
-  gap: 8px;
   white-space: nowrap;
-  min-width: 120px;
   padding: 4px 8px;
-  align-items: center;
-  border: 1px solid #fff;
+  width: 150px;
 }
 
 /* Add button */
@@ -333,6 +332,7 @@ td.action-buttons {
   text-decoration: none;
   font-size: 12px;
   display: inline-block;
+  margin-right: 4px;
 }
 
 .edit-btn {
