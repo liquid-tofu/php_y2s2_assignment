@@ -135,7 +135,7 @@
       $batch = $end_batch;
     }
 
-    $heads = ["#", "ID", "Username", "Email", "Role", "Created Time"];
+    $heads = ["#", "ID", "Username", "Email", "Role", "Created Time", "Actions"];
 
     function batch_btns($batch, $end_batch){
       $per_page = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
@@ -290,6 +290,31 @@
 
       <?php
       $users = display($conn);
+
+      if(empty($users)){
+        echo "<tr><td colspan='6' style='padding: 20px;'>No users found</td></tr>";
+      } else {
+        $i = ($batch - 1) * $limit;
+        foreach($users as $row){
+          $i++;
+          echo '<tr class="data-row">';
+          echo "<td>" . $i . "</td>";
+          echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+          echo "<td>" . htmlspecialchars($row['username']) . "</td>";
+          echo "<td>" . htmlspecialchars($row['email']) . "</td>";
+          echo "<td>" . strtoupper($row['role']) . "</td>";
+          echo "<td>" . htmlspecialchars($row['created_at']) . "</td>";
+          echo "<td class='action-buttons'>
+                  <a href='edituser.php?id=" . $row['id'] . "' class='edit-btn'>Edit</a>
+                  <a href='deleteuser.php?id=" . $row['id'] . "' class='delete-btn' onclick='return confirm(\"Are you sure?\")'>Delete</a>
+                </td>";
+          echo "</tr>";
+        }
+      }
+      ?>
+
+      <?php
+      $users = display($conn);
       
       if(empty($users)){
         echo "<tr><td colspan='6' style='padding: 20px;'>No users found</td></tr>";
@@ -315,6 +340,12 @@
       }
       ?>
     </table>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
+      <a href="adduser.php" class="add-btn">
+        <i class="bi bi-plus-circle"></i> Add New User
+      </a>
+    </div>
 
     <div id="pagination-container">
       <?php
