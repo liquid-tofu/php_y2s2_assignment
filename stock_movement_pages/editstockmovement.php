@@ -173,4 +173,107 @@ require('../components/header.php');
           <a href="stock_movement.php" class="cancel-btn">Cancel</a>
         </div>
       </form>
-   
+    </div>
+  </div>
+</div>
+
+<script>
+const typeSelect = document.getElementById('type');
+const quantityHint = document.getElementById('quantity-hint');
+
+// Trigger on page load
+function updateHint() {
+  if (typeSelect.value === 'ADJUST') {
+    quantityHint.textContent = 'This will set the stock to this exact quantity.';
+    quantityHint.style.color = '#ffc107';
+  } else if (typeSelect.value === 'OUT') {
+    quantityHint.textContent = 'This will remove this quantity from stock.';
+    quantityHint.style.color = '#dc3545';
+  } else if (typeSelect.value === 'IN') {
+    quantityHint.textContent = 'This will add this quantity to stock.';
+    quantityHint.style.color = '#28a745';
+  } else {
+    quantityHint.textContent = '';
+  }
+}
+
+// Run on page load
+updateHint();
+
+// Run when selection changes
+typeSelect.addEventListener('change', updateHint);
+</script>
+
+<style>
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  max-width: 500px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.form-group textarea {
+  resize: vertical;
+}
+.form-group small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+}
+.form-buttons {
+  margin-top: 30px;
+  display: flex;
+  gap: 15px;
+}
+.submit-btn {
+  background: #00BFCB;
+  color: white;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.submit-btn:hover {
+  background: #00a5b0;
+}
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  padding: 10px 24px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.cancel-btn:hover {
+  background: #5a6268;
+}
+.message {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+* label {
+  color: #b2b2b2 !important;
+}
+</style>
+
+<?php require('../components/footer.php'); ?>

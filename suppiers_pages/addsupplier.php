@@ -162,6 +162,9 @@ require('../components/header.php');
   color: #721c24;
   border: 1px solid #f5c6cb;
 }
+* label {
+  color: #b2b2b2 !important;
+}
 </style>
 
 <?php require('../components/footer.php'); ?>

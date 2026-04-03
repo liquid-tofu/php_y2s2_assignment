@@ -6,6 +6,7 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($id <= 0) {
   $_SESSION['message'] = 'Invalid purchase order ID.';
+  $_SESSION['message_type'] = 'error';
   header('Location: po.php');
   exit;
 }
@@ -21,20 +22,27 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
   $_SESSION['message'] = 'Purchase order not found.';
+  $_SESSION['message_type'] = 'error';
   header('Location: po.php');
   exit;
 }
 
 $order = $result->fetch_assoc();
 
-$items_sql = "SELECT poi.*, p.name as product_name 
+$items_sql = "SELECT poi.*, p.name as product_name, p.price
               FROM poi 
               JOIN products p ON poi.product_id = p.id 
               WHERE poi.po_id = ?";
 $items_stmt = $conn->prepare($items_sql);
 $items_stmt->bind_param("i", $id);
 $items_stmt->execute();
-$items = $items_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$items_result = $items_stmt->get_result();
+$items = [];
+$total_amount = 0;
+while ($row = $items_result->fetch_assoc()) {
+  $items[] = $row;
+  $total_amount += $row['quantity'] * $row['unit_price'];
+}
 
 function getStatusBadge($status) {
   $badges = [
@@ -64,6 +72,12 @@ require('../components/header.php');
       <h3>Purchase Order Details</h3>
       <hr>
 
+      <?php if (isset($_SESSION['message'])): ?>
+        <div class="message <?= $_SESSION['message_type'] ?? 'success' ?>">
+          <?= htmlspecialchars($_SESSION['message']); unset($_SESSION['message']); unset($_SESSION['message_type']); ?>
+        </div>
+      <?php endif; ?>
+
       <div class="order-info">
         <div class="info-row">
           <strong>PO ID:</strong> <?= $order['id'] ?>
@@ -89,4 +103,175 @@ require('../components/header.php');
       <table id="content-table">
         <thead>
           <tr>
-            <th>#
+            <th>#</th>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (count($items) > 0): ?>
+            <?php $counter = 1; ?>
+            <?php foreach ($items as $item): ?>
+              <tr>
+                <td><?= $counter++ ?></td>
+                <td><?= htmlspecialchars($item['product_name']) ?></td>
+                <td><?= number_format($item['quantity']) ?></td>
+                <td>$<?= number_format($item['unit_price'], 2) ?></td>
+                <td>$<?= number_format($item['quantity'] * $item['unit_price'], 2) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="5" style="text-align: center; color: #b2b2b2 !important;">No items found</td>
+            </tr>
+          <?php endif; ?>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="text-align: right;"><strong>Grand Total:</strong></td>
+            <td><strong>$<?= number_format($total_amount, 2) ?></strong></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="form-buttons">
+        <a href="po.php" class="cancel-btn">Back to Purchase Orders</a>
+        <?php if ($order['status'] == 'PENDING'): ?>
+          <a href="editpo.php?id=<?= $order['id'] ?>" class="submit-btn">Edit Order</a>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.order-info {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+.info-row {
+  margin-bottom: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+.info-row strong {
+  display: inline-block;
+  width: 120px;
+  color: #555;
+}
+#content-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+#content-table th,
+#content-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+#content-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+#content-table tfoot td {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+.status-pending {
+  background: #ffc107;
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.status-approved {
+  background: #28a745;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.status-rejected {
+  background: #dc3545;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.status-cancelled {
+  background: #6c757d;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.form-buttons {
+  margin-top: 30px;
+  display: flex;
+  gap: 15px;
+}
+.submit-btn {
+  background: #00BFCB;
+  color: white;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-block;
+}
+.submit-btn:hover {
+  background: #00a5b0;
+}
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  padding: 10px 24px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  display: inline-block;
+}
+.cancel-btn:hover {
+  background: #5a6268;
+}
+.message {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+h4 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+#content-container h3,
+#content-container h4 {
+  color: #b2b2b2 !important;
+}
+#content-container {
+  color: #000;
+}
+</style>
+
+<?php require('../components/footer.php'); ?>

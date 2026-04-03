@@ -307,9 +307,6 @@ require('../components/header.php');
               echo "<td>" . htmlspecialchars($row['created_at']) . "</td>";
               echo "<td class='action-buttons'>
                       <a href='viewpo.php?id={$row['id']}' class='view-btn'>View</a>
-                      <a href='editpo.php?id={$row['id']}' class='edit-btn'>Edit</a>
-                      <a href='deletepo.php?id={$row['id']}' class='delete-btn'
-                         onclick='return confirm(\"Are you sure?\")'>Delete</a>
                      </td>";
               echo "</tr>";
             }

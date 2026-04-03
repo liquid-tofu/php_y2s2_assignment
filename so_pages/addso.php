@@ -7,7 +7,14 @@ $error = '';
 function getProducts($conn) {
   $sql = "SELECT id, name, price FROM products ORDER BY name";
   $result = $conn->query($sql);
-  return $result->fetch_all(MYSQLI_ASSOC);
+  if (!$result) {
+    return [];
+  }
+  $products = [];
+  while ($row = $result->fetch_assoc()) {
+    $products[] = $row;
+  }
+  return $products;
 }
 
 function checkStock($conn, $product_id, $quantity) {
@@ -16,7 +23,7 @@ function checkStock($conn, $product_id, $quantity) {
   $stmt->bind_param("i", $product_id);
   $stmt->execute();
   $result = $stmt->get_result();
-  if ($result->num_rows > 0) {
+  if ($result && $result->num_rows > 0) {
     $stock = $result->fetch_assoc();
     return $stock['quantity'] >= $quantity;
   }
@@ -51,6 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $items = [];
 
     foreach ($products as $index => $product_id) {
+      if (empty($product_id)) continue;
+      
       $quantity = intval($quantities[$index] ?? 0);
       if ($product_id && $quantity > 0) {
         if (!checkStock($conn, $product_id, $quantity)) {
@@ -63,15 +72,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("i", $product_id);
         $stmt->execute();
         $result = $stmt->get_result();
-        $product = $result->fetch_assoc();
-        $unit_price = $product['price'];
-        $item_total = $quantity * $unit_price;
-        $total_amount += $item_total;
-        $items[] = [
-          'product_id' => $product_id,
-          'quantity' => $quantity,
-          'unit_price' => $unit_price
-        ];
+        if ($result && $result->num_rows > 0) {
+          $product = $result->fetch_assoc();
+          $unit_price = $product['price'];
+          $item_total = $quantity * $unit_price;
+          $total_amount += $item_total;
+          $items[] = [
+            'product_id' => $product_id,
+            'quantity' => $quantity,
+            'unit_price' => $unit_price
+          ];
+        }
       }
     }
 
@@ -83,24 +94,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sql = "INSERT INTO so (cus_name, cus_email, order_date, total_amount) VALUES (?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("sssd", $cus_name, $cus_email, $order_date, $total_amount);
-        $stmt->execute();
+        
+        if (!$stmt->execute()) {
+          throw new Exception('Failed to insert order');
+        }
+        
         $so_id = $conn->insert_id;
 
         $item_sql = "INSERT INTO soi (so_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)";
         $item_stmt = $conn->prepare($item_sql);
+        
         foreach ($items as $item) {
           $item_stmt->bind_param("iiid", $so_id, $item['product_id'], $item['quantity'], $item['unit_price']);
-          $item_stmt->execute();
+          if (!$item_stmt->execute()) {
+            throw new Exception('Failed to insert order item');
+          }
           updateStock($conn, $item['product_id'], $item['quantity']);
         }
 
         $conn->commit();
         $_SESSION['message'] = 'Sales order created successfully!';
+        $_SESSION['message_type'] = 'success';
         header('Location: so.php');
         exit;
       } catch (Exception $e) {
         $conn->rollback();
-        $error = 'Something went wrong. Please try again.';
+        $error = 'Something went wrong: ' . $e->getMessage();
       }
     }
   }
@@ -198,7 +217,10 @@ const allProducts = <?php echo json_encode($all_products); ?>;
 function calculateItemTotal(row) {
   const qty = parseFloat(row.querySelector('.quantity').value) || 0;
   const priceInput = row.querySelector('.unit-price-display');
-  const price = parseFloat(priceInput.value.replace('$', '')) || 0;
+  let price = 0;
+  if (priceInput.value) {
+    price = parseFloat(priceInput.value.replace('$', '')) || 0;
+  }
   const total = qty * price;
   row.querySelector('.item-total').value = '$' + total.toFixed(2);
   return total;
@@ -237,6 +259,10 @@ function attachRowEvents(row) {
     if (selected) {
       unitPriceDisplay.value = '$' + parseFloat(selected.price).toFixed(2);
       calculateItemTotal(row);
+      calculateGrandTotal();
+    } else {
+      unitPriceDisplay.value = '';
+      row.querySelector('.item-total').value = '';
       calculateGrandTotal();
     }
   });
@@ -379,6 +405,9 @@ document.querySelectorAll('.item-row').forEach(row => attachRowEvents(row));
 }
 .unit-price-display {
   background: #f5f5f5;
+}
+* label {
+  color: #b2b2b2 !important;
 }
 </style>
 

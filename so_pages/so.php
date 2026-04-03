@@ -278,10 +278,7 @@ require('../components/header.php');
               echo "<td>$" . number_format($row['total_amount'], 2) . "</td>";
               echo "<td class='action-buttons'>
                       <a href='viewso.php?id={$row['id']}' class='view-btn'>View</a>
-                      <a href='editso.php?id={$row['id']}' class='edit-btn'>Edit</a>
-                      <a href='deleteso.php?id={$row['id']}' class='delete-btn'
-                         onclick='return confirm(\"Are you sure?\")'>Delete</a>
-                     </td>";
+                    </td>";
               echo "</tr>";
             }
           }
@@ -439,6 +436,9 @@ if (performance.navigation.type === 1) {
 }
 .view-btn:hover {
   background: #138496;
+}
+* label {
+  color: #b2b2b2 !important;
 }
 </style>
 
