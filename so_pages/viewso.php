@@ -133,12 +133,6 @@ require('../components/header.php');
 
       <div class="form-buttons">
         <a href="so.php" class="cancel-btn">Back to Sales Orders</a>
-        <?php if ($order['status'] == 'PENDING'): ?>
-          <a href="cancelso.php?id=<?= $order['id'] ?>" class="cancel-order-btn" 
-             onclick="return confirm('Cancel this sales order? This action cannot be undone.')">
-            Cancel Order
-          </a>
-        <?php endif; ?>
       </div>
     </div>
   </div>

@@ -138,9 +138,6 @@ require('../components/header.php');
 
       <div class="form-buttons">
         <a href="po.php" class="cancel-btn">Back to Purchase Orders</a>
-        <?php if ($order['status'] == 'PENDING'): ?>
-          <a href="editpo.php?id=<?= $order['id'] ?>" class="submit-btn">Edit Order</a>
-        <?php endif; ?>
       </div>
     </div>
   </div>
