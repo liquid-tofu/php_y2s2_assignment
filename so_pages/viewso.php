@@ -299,6 +299,10 @@ h4 {
 #content-container {
   color: #000;
 }
+
+* tr {
+  background-color: #fff;
+}
 </style>
 
 <?php require('../components/footer.php'); ?>
