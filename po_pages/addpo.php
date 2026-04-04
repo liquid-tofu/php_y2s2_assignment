@@ -99,7 +99,7 @@ require('../components/header.php');
       <h3>Create Purchase Order</h3>
       <hr>
 
-      <?php if ($error): ?>
+      <?php if (!empty($error)): ?>
         <div class="message error"><?= htmlspecialchars($error) ?></div>
       <?php endif; ?>
 

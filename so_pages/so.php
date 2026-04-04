@@ -286,10 +286,6 @@ require('../components/header.php');
         </tbody>
       </table>
 
-      <a href="addso.php" class="add-btn">
-        <i class="bi bi-plus-circle"></i> Create Sales Order
-      </a>
-
       <div id="pagination-container">
         <?php
         if ($count > 0) {
