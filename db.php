@@ -119,12 +119,23 @@ class stmt_compat {
   }
 }
 
+/*
 $conn = new mysqli_compat(
   'crossover.proxy.rlwy.net',
   'root',
   'HsSaqkvbwlevrKyGuavIOVumwczGiAnY',
   'railway',
   28023
+);
+*/
+
+/* temp */
+$conn = new mysqli_compat(
+  'localhost',
+  'root',
+  'kira7!23A5',
+  'stocking',
+  3306
 );
 
 if($conn->connect_error){
