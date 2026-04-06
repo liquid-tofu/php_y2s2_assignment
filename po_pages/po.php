@@ -1,16 +1,6 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['user_id'])) {
-  header("Location: login.php");
-  exit;
-}
-
-require('../db.php');
-
-$per_page   = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
-$limit      = $per_page;
-$batch      = isset($_GET['batch'])    ? (int)$_GET['batch']    : 1;
+require('../components/header.php');
+require('../components/sidebar.php');
 
 $search     = $_GET['search']     ?? $_POST['search']     ?? '';
 $supplier_id = $_GET['supplier_id'] ?? $_POST['supplier_id'] ?? '';
@@ -166,10 +156,7 @@ function getStatusBadge($status) {
   return $badges[$status] ?? $status;
 }
 
-require('../components/header.php');
 ?>
-<link rel="stylesheet" href="/styles/content.css">
-<?php require('../components/sidebar.php'); ?>
 
 <div class="main">
   <div class="topbar">

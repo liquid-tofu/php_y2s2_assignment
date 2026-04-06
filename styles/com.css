@@ -104,9 +104,6 @@ body {
   font-weight: 600;
 }
 
-#logout-btn {
-  align-items: start;
-}
 #logout-btn:hover {
   color: red;
   background-color: rgba(223, 21, 21, 0.5);

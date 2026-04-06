@@ -1,32 +1,7 @@
 <?php
-session_start();
-require_once 'db.php';
-
-if (!isset($_SESSION['user_id']) && isset($_COOKIE['user_id'])) {
-  $_SESSION['user_id'] = $_COOKIE['user_id'];
-  $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
-  $stmt->bind_param("i", $_SESSION['user_id']);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $user = $result->fetch_assoc();
-  if ($user) {
-    $_SESSION['username'] = $user['username'];
-    $_SESSION['role'] = $user['role'];
-  } else {
-    setcookie('user_id', '', time() - 3600, "/");
-    header("Location: login.php");
-    exit;
-  }
-}
-
-if (!isset($_SESSION['user_id'])) {
-  header("Location: login.php");
-  exit;
-}
-
 require_once 'components/header.php';
 require_once 'components/sidebar.php';
-
+/*
 function countTable($conn, $table) {
   $result = $conn->query("SELECT COUNT(*) as total FROM $table");
   return $result->fetch_assoc()['total'] ?? 0;
@@ -62,7 +37,9 @@ $icons = [
   "Movements" => "bi-arrow-left-right",
   "Categories" => "bi-tags"
 ];
+*/
 ?>
+
 
 <div class="main">
   <div class="topbar">
