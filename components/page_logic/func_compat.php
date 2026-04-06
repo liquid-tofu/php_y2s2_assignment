@@ -27,7 +27,8 @@ function batch_btns($batch, $end_batch) {
   echo "</select>";
 }
 
-function display($conn, $tbl_name, $allowed_sort, $where, $params, $types) {
+function display($conn, $where, $params, $types) {
+  global $col_block, $col_block_name, $tbl_block, $block_id, $tbl_main, $search_for, $joined, $allowed_columns;
   global $sort_by, $sort_order, $batch, $limit;
   $offset = ($batch - 1) * $limit;
 

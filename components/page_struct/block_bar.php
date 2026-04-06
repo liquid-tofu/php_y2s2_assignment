@@ -1,17 +1,17 @@
 <section id="search-type">
-  <label for="<?= $block_name ?>"><?= ucwords(strtolower($block_name)) ?></label>
+  <label for="block"><?= ucfirst(strtolower("$col_block_name")); ?></label>
   <div class="div-btn">
-    <select name="<?= $block_name ?>" id="<?= $block_name ?>">
-      <option value="none"    <?= ($search_block == 'none')    ? 'selected' : '' ?>>None</option>
+    <select name="block" id="block">
+      <option value="none" <?= ($search_block == 'none') ? 'selected' : '' ?>>None</option>
       <?php
-      $col_block = [];
-      $list = $conn->query("SELECT DISTINCT $block_name FROM $tbl_name");
+      $columns = [];
+      $list = $conn->query("SELECT DISTINCT $col_block FROM $tbl_block");
       if($list){
-        $col_block = $list->fetch_all(MYSQLI_ASSOC);
+        $columns = $list->fetch_all(MYSQLI_ASSOC);
       }
 
-      foreach($col_block as $cell){
-        $value = $cell[$block_name];
+      foreach($columns as $cell){
+        $value = $cell[$col_block];
         $selected = (strcasecmp($search_block, $value) == 0) ? "selected" : "";
         echo '<option value="' . $value . '" ' . $selected . '>' . ucwords(strtolower($value)) . '</option>';
       }

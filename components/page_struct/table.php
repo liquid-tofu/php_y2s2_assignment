@@ -31,7 +31,7 @@
 </thead>
 <tbody>
   <?php
-  $rows = display($conn, $tbl_name, $allowed_columns, $countWhere, $countParams, $countTypes);
+  $rows = display($conn, $tbl_main, $allowed_columns, $countWhere, $countParams, $countTypes);
   if (empty($rows)) {
     echo "<tr><td colspan='7' style='padding: 20px; text-align: center; color: #aaa;'>No users found</td><tr>";
   } else {
@@ -42,8 +42,8 @@
       echo "<td>$i</td>";
 
       foreach ($allowed_columns as $col) {
-        $value = $row[$col];
-        if ($col === $block_name) {
+        $value = $row[$col] ?? $row[trim($col, '`')] ?? '';
+        if ($col === $col_block) {
           $value = ucwords(strtolower($value));
         }
         echo "<td>" . htmlspecialchars($value) . "</td>";

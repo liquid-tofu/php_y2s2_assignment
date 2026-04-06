@@ -1,12 +1,19 @@
 <?php
-$block_name = "category";
-$tbl_name = "products";
+$col_block = "name";
+$col_block_name = "category";
+$tbl_block = "categories";
+$block_id = "cat_id";
 
-$allowed_columns = ['id', 'name', 'price', 'cost', 'cat_id', 'created_at'];
+$tbl_main = "products";
+$search_for = ["id", "name"];
+$joined = true;
+
+$allowed_columns = ['id', 'name', 'desc', 'price', 'cost', 'category', 'created_at'];
 $heads = ["#", "ID", "Name", "Description", "Price", "Cost", "Category", "Created Time", "Actions"];
 $col_map = [
   'ID'           => 'id',
   'Name'         => 'name',
+  'Description'  => 'desc',
   'Price'        => 'price',
   'Cost'         => 'cost',
   'Created Time' => 'created_at',
@@ -73,3 +80,4 @@ require('../components/page_logic/func_compat.php');
 </script>
 <script src="/components/js.js"></script>
 <?php require('../components/footer.php'); ?>
+
