@@ -1,6 +1,6 @@
 <?php
 $origin = [
-  'page' => 'sale_order',
+  'page' => 'sale order',
   'table' => 'so',
   'use_date' => 'order_date',
   'search' => [

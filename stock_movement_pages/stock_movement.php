@@ -1,6 +1,6 @@
 <?php
 $origin = [
-  'page' => 'stock_movement',
+  'page' => 'stock movement',
   'table' => 'stock_movement',
   'use_date' => 'created_at',
   'search' => [

@@ -31,7 +31,7 @@
       <a href="/so_pages/so.php"><i class="bi bi-receipt"></i> <span class="sidebar-link">Sales Order</span></a>
     </li>
     <li>
-      <a id="logout-btn" href="/logout.php" class="logout-btn">
+      <a id="logout-btn" href="/logout.php" id="logout-btn">
         <i class="bi bi-box-arrow-right"></i> <span class="sidebar-link">Logout</span>
       </a>
     </li>

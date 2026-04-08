@@ -61,11 +61,11 @@ require('../components/page_logic/func_compat.php');
           <?php require(__DIR__ . '/../components/page_struct/block_bar.php'); ?>
           <section id="search-date">
             <div class="div-btn">
-              <input type="number" name="from" value="<?= htmlspecialchars($from) ?>" min=0 max=999>
+              <input type="number" name="from" value="<?= htmlspecialchars($from) ?>" min=0 max=999 placeholder="Minimum">
             </div>
             <p>-</p>
             <div class="div-btn">
-              <input type="number" name="to" value="<?= htmlspecialchars($to) ?>" min=0 max=999>
+              <input type="number" name="to" value="<?= htmlspecialchars($to) ?>" min=0 max=999 placeholder="Maximum">
             </div>
           </section>
           <?php require(__DIR__ . '/../components/page_struct/search_bar.php'); ?>

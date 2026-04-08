@@ -1,12 +1,18 @@
 <?php
+$origin = [
+  'page' => 'stock',
+  'table' => 'stock',
+  'columns' => null,
+  'joins' => []
+];
+
 require_once 'components/header.php';
 require_once 'components/sidebar.php';
-/*
+
 function countTable($conn, $table) {
   $result = $conn->query("SELECT COUNT(*) as total FROM $table");
   return $result->fetch_assoc()['total'] ?? 0;
 }
-
 $poCount = countTable($conn, 'po');
 $soCount = countTable($conn, 'so');
 $supplierCount = countTable($conn, 'suppliers');
@@ -26,7 +32,6 @@ $data = [
   "Movements" => $movementCount,
   "Categories" => $categoryCount
 ];
-
 $icons = [
   "Purchase Orders" => "bi-file-earmark-text",
   "Sales Orders" => "bi-cash-stack",
@@ -37,9 +42,7 @@ $icons = [
   "Movements" => "bi-arrow-left-right",
   "Categories" => "bi-tags"
 ];
-*/
 ?>
-
 
 <div class="main">
   <div class="topbar">
