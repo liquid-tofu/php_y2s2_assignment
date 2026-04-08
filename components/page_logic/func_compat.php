@@ -33,25 +33,26 @@ function display($conn, $where, $params, $types, $config) {
   $limit = max(1, (int)$limit);
   $offset = ($batch - 1) * $limit;
 
-  $col_list = [];     // used to validate/sanitize sort columns
-  $select_list = [];  // used to fetch unique row keys
+  // make a list of what col from what tbl to select
+  $col_list = [];
+  $select_list = [];
   foreach ($config['columns'] as $values) {
-    $col_expr = "{$values[1]}.{$values[2]}";
-    $col_list[] = $col_expr;
-    // Alias each selected column with a stable key, so `table.php` can read it reliably.
-    $select_list[] = "{$col_expr} AS `{$values[1]}.{$values[2]}`";
+    $temp = "{$values[1]}";
+    $col_list[] = $temp;
+    $select_list[] = "{$temp} AS `{$values[1]}`";
   }
   $select = implode(", ", $select_list);
 
+  // sort bs
   $first_col = reset($config['columns']);
-  $default_sort = "{$first_col[1]}.{$first_col[2]}";
+  $default_sort = "{$first_col[1]}";
   $sort_by = in_array($sort_by, $col_list) ? $sort_by : $default_sort;
   $sort_order   = strtoupper($sort_order) === 'DESC' ? 'DESC' : 'ASC';
 
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
   $sql = "SELECT $select 
-          FROM {$config['table']} {$config['ali']}";
+          FROM {$config['table']} AS m";
   foreach ($config['joins'] as $j) {
     $sql .= " JOIN {$j[0]} AS {$j[1]} 
               ON {$j[2]} = {$j[3]}";
@@ -65,6 +66,7 @@ function display($conn, $where, $params, $types, $config) {
   if (!empty($params)) {
     $stmt->bind_param($types, ...$params);
   }
+
   $stmt->execute();
   $result = $stmt->get_result();
   if (!$result) {

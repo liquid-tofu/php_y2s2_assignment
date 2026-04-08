@@ -11,7 +11,7 @@
     </button>';
 
     echo "<td>" . htmlspecialchars('#') . "</td>";
-    foreach (array_keys($origin_src['columns']) as $i => $col) {
+    foreach (array_keys($origin['columns']) as $i => $col) {
       $db_col   = $col_map[$col] ?? '';
       $cls      = '';
       $up_col   = '#fff';
@@ -29,9 +29,9 @@
 </thead>
 <tbody>
   <?php
-  $rows = display($conn, $countWhere, $countParams, $countTypes, $origin_src);
+  $rows = display($conn, $countWhere, $countParams, $countTypes, $origin);
   if (empty($rows)) {
-    echo "<tr><td colspan='" . (count($origin_src['columns']) + 2) . "' style='padding: 20px; text-align: center; color: #aaa;'>No records found</td><tr>";
+    echo "<tr><td colspan='" . (count($origin['columns'])) + 2 . "' style='padding: 20px; text-align: center; color: #aaa;'>No records found</td><tr>";
   } else {
     $i = ($batch - 1) * $limit;
     foreach ($rows as $row) {
@@ -40,24 +40,19 @@
       echo "<td>$i</td>";
 
       $format_cols = [];
-      foreach ($origin_src['columns'] as $key => $values) {
-        if ($values[0]) {
-          $format_cols[] = "{$values[1]}.{$values[2]}";
-        }
-      }
-      foreach ($origin_src['columns'] as $key => $values) {
-        $col_key = "{$values[1]}.{$values[2]}";
+      foreach ($origin['columns'] as $values) {
+        $col_key = $values[1];
         $value = $row[$col_key] ?? '';
-        if (in_array($col_key, $format_cols)) {
+        if ($values[0]) {
           $value = ucwords(strtolower($value));
         }
         echo "<td>" . htmlspecialchars($value) . "</td>";
       }
 
-      $page = $origin_src['page'] ?? '';
+      $page = $origin['page'] ?? '';
       echo "<td class='action-buttons'>
-              <a href='edit{$page}.php?id={$row['id']}' class='edit-btn'>Edit</a>
-              <a href='delete{$page}.php?id={$row['id']}' class='delete-btn'
+              <a href='edit{$page}.php?id=none' class='edit-btn'>Edit</a>
+              <a href='delete{$page}.php?id=none' class='delete-btn'
                   onclick='return confirm(\"Are you sure?\")'>Delete</a>
             </td>";
       echo "</tr>";

@@ -1,45 +1,41 @@
 <?php
-$search       = $_GET['search'] ?? $_POST['search'] ?? '';
-$search_block = $_GET['block']  ?? $_POST['block']  ?? 'none';
-$from         = $_GET['from']   ?? $_POST['from']   ?? '';
-$to           = $_GET['to']     ?? $_POST['to']     ?? '';
+$search       = $_GET['search']   ?? $_POST['search']     ?? '';
+$search_block = $_GET['block']    ?? $_POST['block']      ?? 'none';
+$from         = $_GET['from']     ?? $_POST['from']       ?? '';
+$to           = $_GET['to']       ?? $_POST['to']         ?? '';
 
-$sort_by    = $_GET['sort_by']    ?? $_POST['sort_by']      ?? '';
-$sort_order = $_GET['sort_order'] ?? $_POST['sort_order']   ?? '';
+$sort_by    = $_GET['sort_by']    ?? $_POST['sort_by']    ?? '';
+$sort_order = $_GET['sort_order'] ?? $_POST['sort_order'] ?? '';
 
 $countWhere  = [];
 $countParams = [];
 $countTypes  = "";
 
 if ($search != '') {
-  $countWhere[] =
-    "({$origin_src['search']['int'][0]}.
-      {$origin_src['search']['int'][1]} = ?
-      OR {$origin_src['search']['txt'][0]}.
-      {$origin_src['search']['txt'][1]} LIKE ?)";
+  $countWhere[]  = "({$origin['search']['int']} = ? OR {$origin['search']['txt']} LIKE ?)";
   $countParams[] = $search;
   $countParams[] = "$search%";
   $countTypes   .= "is";
 }
 if ($search_block != 'none') {
-  $countWhere[]  = "{$origin_src['block']['alias']}.{$origin_src['block']['column']} = ?";
+  $countWhere[]  = "{$origin['block']['ali']}.{$origin['block']['column']} = ?";
   $countParams[] = $search_block;
   $countTypes   .= "s";
 }
-$date = $origin_src['use_date'] ?? 'created_at';
+$date = $origin['use_date'] ?? 'created_at';
 if ($from != '') {
-  $countWhere[]  = "{$origin_src['ali']}.{$date} >= ?";
+  $countWhere[]  = "m.{$date} >= ?";
   $countParams[] = $from;
   $countTypes   .= "s";
 }
 if ($to != '') {
-  $countWhere[]  = "{$origin_src['ali']}.{$date} <= ?";
+  $countWhere[]  = "m.{$date} <= ?";
   $countParams[] = $to . " 23:59:59";
   $countTypes   .= "s";
 }
 
-$countSql = "SELECT COUNT(*) FROM {$origin_src['table']} AS {$origin_src['ali']}";
-foreach ($origin_src['joins'] as $j) {
+$countSql = "SELECT COUNT(*) FROM {$origin['table']} AS m";
+foreach ($origin['joins'] as $j) {
   $countSql .= " JOIN {$j[0]} AS {$j[1]} 
                  ON {$j[2]} = {$j[3]}";
 }
@@ -54,6 +50,7 @@ if (!$countStmt) {
 if (!empty($countParams)) {
   $countStmt->bind_param($countTypes, ...$countParams);
 }
+
 $countStmt->execute();
 $result = $countStmt->get_result();
 if (!$result) {

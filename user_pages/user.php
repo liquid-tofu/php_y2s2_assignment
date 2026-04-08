@@ -1,32 +1,32 @@
 <?php
-$block = [
-  "table" => "users",
-  "column" => "role",
-  "name" => "role",
-  "block_tbl" => "m"
+$origin = [
+  'page' => 'user',
+  'table' => 'users',
+  'use_date' => 'created_at',
+  'search' => [
+    'int' => 'm.id',
+    'txt' => 'm.username'
+  ],
+  'block' => [
+    'table' => 'users',
+    'ali' => 'm',
+    'column' => 'role',
+    'namis' => 'role'
+  ],
+  'columns' => [
+    'ID' => [false, 'm.id'],
+    'Username' => [true, 'm.username'],
+    'Email' => [true, 'm.email'],
+    'Role' => [true, 'm.role'],
+    'Created At' => [false, 'm.created_at']
+  ],
+  'joins' => []
 ];
-$join = [
-  "joined" => false,
-  "join_tbl" => "",
-  "join_on" => "",
-  "join_ft" => "",
-  "join_col" => "",
-  "join_as" => ""
-];
-$tbl = [
-  "table" => "users",
-  "sch_index" => "id",
-  "sch_text" => "username"
-];
-$allowed_columns = ['id', 'username', 'email', 'role', 'created_at'];
-$heads = ["#", "ID", "Username", "Email", "Role", "Created Time", "Actions"];
-$col_map = [
-  'ID'           => 'id',
-  'Username'     => 'username',
-  'Email'        => 'email',
-  'Role'         => 'role',
-  'Created Time' => 'created_at',
-];
+
+$col_map = [];
+foreach ($origin['columns'] as $key => $arr) {
+  $col_map[$key] = $arr[1];
+}
 
 require('../components/header.php');
 require('../components/sidebar.php');
@@ -44,7 +44,7 @@ require('../components/page_logic/func_compat.php');
 
   <div class="content">
     <div id="content-container">
-      <h3>User Management</h3>
+      <h3><?= ucwords(strtolower($origin['page'] . " management")) ?></h3>
       <hr>
       <?php
       // notification
@@ -65,7 +65,7 @@ require('../components/page_logic/func_compat.php');
       <?php require(__DIR__ . '/../components/page_struct/table.php'); ?>      
 
       <div id="pagination-container">
-        <a href="adduser.php" class="add-btn">
+        <a href="addstock.php" class="add-btn">
           <i class="bi bi-plus-circle"></i>Add
         </a>
         <?php
@@ -84,7 +84,8 @@ require('../components/page_logic/func_compat.php');
 </div>
 
 <script>
-  const colMap    = <?php echo json_encode($col_map); ?>;
+  const colMap = <?= json_encode($col_map) ?>;
 </script>
 <script src="/components/js.js"></script>
 <?php require('../components/footer.php'); ?>
+

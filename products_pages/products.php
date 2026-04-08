@@ -1,35 +1,36 @@
 <?php
-$block = [
-  "table" => "categories",
-  "column" => "name",
-  "name" => "category",
-  "block_tbl" => "s"
-];
-$join = [
-  "joined" => true,
-  "join_tbl" => "categories",
-  "join_on" => "cat_id",
-  "join_ft" => "id",
-  "join_col" => "name",
-  "join_as" => "category"
-];
-$tbl = [
-  "table" => "products",
-  "sch_index" => "id",
-  "sch_text" => "name"
+$origin = [
+  'page' => 'product',
+  'table' => 'products',
+  'use_date' => 'created_at',
+  'search' => [
+    'int' => 'm.id',
+    'txt' => 'm.name'
+  ],
+  'block' => [
+    'table' => 'categories',
+    'ali' => 't',
+    'column' => 'name',
+    'namis' => 'category'
+  ],
+  'columns' => [
+    'ID' => [false, 'm.id'],
+    'Name' => [true, 'm.name'],
+    'Description' => [true, 'm.desc'],
+    'Price' => [false, 'm.price'],
+    'Cost' => [false, 'm.cost'],
+    'Category' => [true, 't.name'],
+    'Created At' => [false, 'm.created_at']
+  ],
+  'joins' => [
+    ['categories', 't', 'm.cat_id', 't.id']
+  ]
 ];
 
-$allowed_columns = ['id', 'name', '`desc`', 'price', 'cost', 'category', 'created_at'];
-$heads = ["#", "ID", "Name", "Description", "Price", "Cost", "Category", "Created Time", "Actions"];
-$col_map = [
-  'ID'           => 'id',
-  'Name'         => 'name',
-  'Description'  => 'desc',
-  'Price'        => 'price',
-  'Cost'         => 'cost',
-  'Category'     => 'category',
-  'Created Time' => 'created_at',
-];
+$col_map = [];
+foreach ($origin['columns'] as $key => $arr) {
+  $col_map[$key] = $arr[1];
+}
 
 require('../components/header.php');
 require('../components/sidebar.php');
@@ -47,7 +48,7 @@ require('../components/page_logic/func_compat.php');
 
   <div class="content">
     <div id="content-container">
-      <h3>Product Management</h3>
+      <h3><?= ucwords(strtolower($origin['page'] . " management")) ?></h3>
       <hr>
       <?php
       // notification
@@ -68,7 +69,7 @@ require('../components/page_logic/func_compat.php');
       <?php require(__DIR__ . '/../components/page_struct/table.php'); ?>      
 
       <div id="pagination-container">
-        <a href="adduser.php" class="add-btn">
+        <a href="addstock.php" class="add-btn">
           <i class="bi bi-plus-circle"></i>Add
         </a>
         <?php
@@ -87,7 +88,7 @@ require('../components/page_logic/func_compat.php');
 </div>
 
 <script>
-  const colMap    = <?php echo json_encode($col_map); ?>;
+  const colMap = <?= json_encode($col_map) ?>;
 </script>
 <script src="/components/js.js"></script>
 <?php require('../components/footer.php'); ?>

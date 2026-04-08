@@ -1,39 +1,34 @@
 <?php
-$origin_src = [
+$origin = [
   'page' => 'stock',
   'table' => 'stock',
-  'ali' => 'm',
-  // `stock` has no timestamp column; use `id` to avoid SQL errors
-  // when `from`/`to` query params are present.
-  'use_date' => 'id',
+  'use_date' => 'quantity',
   'search' => [
-    'int' => ['m', 'id'],
-    'txt' => ['s', 'name']
+    'int' => 'm.id',
+    'txt' => 's.name'
   ],
   'block' => [
     'table' => 'categories',
-    'alias' => 't',
+    'ali' => 't',
     'column' => 'name',
     'namis' => 'category',
   ],
   'columns' => [
-    'ID' => [false, 'm', 'id'],
-    'Product' => [true, 's', 'name', 'm', 'stock'],
-    'Category' => [true, 't', 'name', 's', 'products'],
-    'Quantity' => [false, 'm', 'quantity']
+    'ID' => [false, 'm.id'],
+    'Product' => [true, 's.name', 'm.stock'],
+    'Category' => [true, 't.name', 's.products'],
+    'Quantity' => [false, 'm.quantity']
   ],
   'joins' => [
     ['products', 's', 'm.product_id', 's.id'],
-    ['categories', 't', 's.category_id', 't.id']
+    ['categories', 't', 's.cat_id', 't.id']
   ]
 ];
 
-$col_map = [
-  'ID' => 'm.id',
-  'Product' => 's.name',
-  'Category' => 't.name',
-  'Quantity' => 'm.quantity',
-];
+$col_map = [];
+foreach ($origin['columns'] as $key => $arr) {
+  $col_map[$key] = $arr[1];
+}
 
 require('../components/header.php');
 require('../components/sidebar.php');
@@ -51,7 +46,7 @@ require('../components/page_logic/func_compat.php');
 
   <div class="content">
     <div id="content-container">
-      <h3><?= ucwords(strtolower($origin_src['page'] . " management")) ?></h3>
+      <h3><?= ucwords(strtolower($origin['page'] . " management")) ?></h3>
       <hr>
       <?php
       // notification
@@ -64,7 +59,15 @@ require('../components/page_logic/func_compat.php');
       <form action="" method="GET" id="search-form">
         <div id="search-container">
           <?php require(__DIR__ . '/../components/page_struct/block_bar.php'); ?>
-          <?php require(__DIR__ . '/../components/page_struct/time_bar.php'); ?>
+          <section id="search-date">
+            <div class="div-btn">
+              <input type="number" name="from" value="<?= htmlspecialchars($from) ?>" min=0 max=999>
+            </div>
+            <p>-</p>
+            <div class="div-btn">
+              <input type="number" name="to" value="<?= htmlspecialchars($to) ?>" min=0 max=999>
+            </div>
+          </section>
           <?php require(__DIR__ . '/../components/page_struct/search_bar.php'); ?>
         </div>
       </form>
@@ -91,7 +94,7 @@ require('../components/page_logic/func_compat.php');
 </div>
 
 <script>
-  const colMap    = <?php echo json_encode($col_map); ?>;
+  const colMap = <?= json_encode($col_map) ?>;
 </script>
 <script src="/components/js.js"></script>
 <?php require('../components/footer.php'); ?>

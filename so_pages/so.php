@@ -1,34 +1,33 @@
 <?php
-$block = [
-  "table" => "so",
-  "column" => "status",
-  "name" => "status",
-  "block_tbl" => "m"
+$origin = [
+  'page' => 'sale_order',
+  'table' => 'so',
+  'use_date' => 'order_date',
+  'search' => [
+    'int' => 'm.id',
+    'txt' => 'm.cus_name'
+  ],
+  'block' => [
+    'table' => 'so',
+    'ali' => 'm',
+    'column' => 'status',
+    'namis' => 'status'
+  ],
+  'columns' => [
+    'ID' => [false, 'm.id'],
+    'Customer Name' => [true, 'm.cus_name'],
+    'Customer Email' => [true, 'm.cus_email'],
+    'Order Date' => [false, 'm.order_date'],
+    'Status' => [true, 'm.status'],
+    'Total Amount' => [false, 'm.total_amount']
+  ],
+  'joins' => []
 ];
-$join = [
-  "joined" => false,
-  "join_tbl" => "",
-  "join_on" => "",
-  "join_ft" => "",
-  "join_col" => "",
-  "join_as" => ""
-];
-$tbl = [
-  "table" => "so",
-  "sch_index" => "id",
-  "sch_text" => "cus_name",
-  "date_col" => "order_date"
-];
-$allowed_columns = ['id', 'cus_name', 'cus_email', 'order_date', 'status', 'total_amount'];
-$heads = ["#", "ID", "Customer", "Email", "Order Date", "Status", "Total Amount", "Actions"];
-$col_map = [
-  'ID'           => 'id',
-  'Customer'     => 'cus_name',
-  'Email'        => 'cus_email',
-  'Order Date'   => 'order_date',
-  'Status'       => 'status',
-  'Total Amount' => 'total_amount',
-];
+
+$col_map = [];
+foreach ($origin['columns'] as $key => $arr) {
+  $col_map[$key] = $arr[1];
+}
 
 require('../components/header.php');
 require('../components/sidebar.php');
@@ -46,7 +45,7 @@ require('../components/page_logic/func_compat.php');
 
   <div class="content">
     <div id="content-container">
-      <h3>Sale Order Management</h3>
+      <h3><?= ucwords(strtolower($origin['page'] . " management")) ?></h3>
       <hr>
       <?php
       // notification
@@ -67,7 +66,7 @@ require('../components/page_logic/func_compat.php');
       <?php require(__DIR__ . '/../components/page_struct/table.php'); ?>      
 
       <div id="pagination-container">
-        <a href="adduser.php" class="add-btn">
+        <a href="addstock.php" class="add-btn">
           <i class="bi bi-plus-circle"></i>Add
         </a>
         <?php
@@ -86,9 +85,8 @@ require('../components/page_logic/func_compat.php');
 </div>
 
 <script>
-  const colMap    = <?php echo json_encode($col_map); ?>;
+  const colMap = <?= json_encode($col_map) ?>;
 </script>
 <script src="/components/js.js"></script>
 <?php require('../components/footer.php'); ?>
-
 

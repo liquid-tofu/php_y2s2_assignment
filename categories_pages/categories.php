@@ -1,31 +1,26 @@
 <?php
-$block = [
-  "table" => "categories",
-  "column" => "name",
-  "name" => "name",
-  "block_tbl" => "m"
+$origin = [
+  'page' => 'category',
+  'table' => 'categories',
+  'use_date' => 'created_at',
+  'search' => [
+    'int' => 'm.id',
+    'txt' => 'm.name'
+  ],
+  'block' => null,
+  'columns' => [
+    'ID' => [false, 'm.id'],
+    'Name' => [true, 'm.name'],
+    'Description' => [true, 'm.desc'],
+    'Created At' => [false, 'm.created_at']
+  ],
+  'joins' => []
 ];
-$join = [
-  "joined" => false,
-  "join_tbl" => "",
-  "join_on" => "",
-  "join_ft" => "",
-  "join_col" => "",
-  "join_as" => ""
-];
-$tbl = [
-  "table" => "categories",
-  "sch_index" => "id",
-  "sch_text" => "name"
-];
-$allowed_columns = ['id', 'name', '`desc`', 'created_at'];
-$heads = ["#", "ID", "Name", "Description", "Created Time", "Actions"];
-$col_map = [
-  'ID'           => 'id',
-  'Name'         => 'name',
-  'Description'  => 'desc',
-  'Created Time' => 'created_at',
-];
+
+$col_map = [];
+foreach ($origin['columns'] as $key => $arr) {
+  $col_map[$key] = $arr[1];
+}
 
 require('../components/header.php');
 require('../components/sidebar.php');
@@ -43,7 +38,7 @@ require('../components/page_logic/func_compat.php');
 
   <div class="content">
     <div id="content-container">
-      <h3>Category Management</h3>
+      <h3><?= ucwords(strtolower($origin['page'] . " management")) ?></h3>
       <hr>
       <?php
       // notification
@@ -63,7 +58,7 @@ require('../components/page_logic/func_compat.php');
       <?php require(__DIR__ . '/../components/page_struct/table.php'); ?>      
 
       <div id="pagination-container">
-        <a href="adduser.php" class="add-btn">
+        <a href="addstock.php" class="add-btn">
           <i class="bi bi-plus-circle"></i>Add
         </a>
         <?php
@@ -82,7 +77,7 @@ require('../components/page_logic/func_compat.php');
 </div>
 
 <script>
-  const colMap    = <?php echo json_encode($col_map); ?>;
+  const colMap = <?= json_encode($col_map) ?>;
 </script>
 <script src="/components/js.js"></script>
 <?php require('../components/footer.php'); ?>
