@@ -27,25 +27,50 @@ function batch_btns($batch, $end_batch) {
   echo "</select>";
 }
 
-function display($conn, $where, $params, $types) {
-  global $col_block, $col_block_name, $tbl_block, $block_id, $tbl_main, $search_for, $joined, $allowed_columns;
+function display($conn, $where, $params, $types, $config) {
   global $sort_by, $sort_order, $batch, $limit;
+  $batch = max(1, (int)$batch);
+  $limit = max(1, (int)$limit);
   $offset = ($batch - 1) * $limit;
 
-  $sort_by      = in_array($sort_by, $allowed_sort) ? $sort_by : 'id';
+  $col_list = [];     // used to validate/sanitize sort columns
+  $select_list = [];  // used to fetch unique row keys
+  foreach ($config['columns'] as $values) {
+    $col_expr = "{$values[1]}.{$values[2]}";
+    $col_list[] = $col_expr;
+    // Alias each selected column with a stable key, so `table.php` can read it reliably.
+    $select_list[] = "{$col_expr} AS `{$values[1]}.{$values[2]}`";
+  }
+  $select = implode(", ", $select_list);
+
+  $first_col = reset($config['columns']);
+  $default_sort = "{$first_col[1]}.{$first_col[2]}";
+  $sort_by = in_array($sort_by, $col_list) ? $sort_by : $default_sort;
   $sort_order   = strtoupper($sort_order) === 'DESC' ? 'DESC' : 'ASC';
 
-  $select = implode(", ", $allowed_sort);
   $whereClause  = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
   $order_clause = "ORDER BY $sort_by $sort_order";
-  $sql          = "SELECT $select FROM $tbl_name $whereClause $order_clause LIMIT $limit OFFSET $offset";
+  $sql = "SELECT $select 
+          FROM {$config['table']} {$config['ali']}";
+  foreach ($config['joins'] as $j) {
+    $sql .= " JOIN {$j[0]} AS {$j[1]} 
+              ON {$j[2]} = {$j[3]}";
+  }
 
+  $sql .= " $whereClause $order_clause LIMIT $limit OFFSET $offset";
   $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+  }
   if (!empty($params)) {
     $stmt->bind_param($types, ...$params);
   }
   $stmt->execute();
-  return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+  $result = $stmt->get_result();
+  if (!$result) {
+    die("Query failed: " . $stmt->error);
+  }
+  return $result->fetch_all(MYSQLI_ASSOC);
 }
 ?>
 

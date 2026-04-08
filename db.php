@@ -98,10 +98,6 @@ class stmt_compat {
     }
   }
 
-  public function get_result() {
-    return new result_compat($this->stmt);
-  }
-
   public function close() {}
 
   public function getErrorCode() {
@@ -116,6 +112,13 @@ class stmt_compat {
       return $this->error->getMessage();
     }
     return null;
+  }
+
+  public function get_result() {
+    if ($this->error) {
+      return false;
+    }
+    return new result_compat($this->stmt);
   }
 }
 

@@ -1,14 +1,30 @@
 <?php
-$block_name = "role";
-$tbl_name = "users";
-
+$block = [
+  "table" => "users",
+  "column" => "role",
+  "name" => "role",
+  "block_tbl" => "m"
+];
+$join = [
+  "joined" => false,
+  "join_tbl" => "",
+  "join_on" => "",
+  "join_ft" => "",
+  "join_col" => "",
+  "join_as" => ""
+];
+$tbl = [
+  "table" => "users",
+  "sch_index" => "id",
+  "sch_text" => "username"
+];
 $allowed_columns = ['id', 'username', 'email', 'role', 'created_at'];
 $heads = ["#", "ID", "Username", "Email", "Role", "Created Time", "Actions"];
 $col_map = [
-  'ID' => 'id',
-  'Username' => 'username',
-  'Email' => 'email',
-  'Role' => 'role',
+  'ID'           => 'id',
+  'Username'     => 'username',
+  'Email'        => 'email',
+  'Role'         => 'role',
   'Created Time' => 'created_at',
 ];
 
@@ -68,7 +84,6 @@ require('../components/page_logic/func_compat.php');
 </div>
 
 <script>
-  const blockName = "<?php echo $block_name; ?>";
   const colMap    = <?php echo json_encode($col_map); ?>;
 </script>
 <script src="/components/js.js"></script>

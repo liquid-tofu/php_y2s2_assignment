@@ -12,43 +12,60 @@ $countParams = [];
 $countTypes  = "";
 
 if ($search != '') {
-  $countWhere[]  = "(CAST(m.{$search_for[0]} AS CHAR) LIKE ? OR m.{$search_for[1]} LIKE ?)";
+  $countWhere[] =
+    "({$origin_src['search']['int'][0]}.
+      {$origin_src['search']['int'][1]} = ?
+      OR {$origin_src['search']['txt'][0]}.
+      {$origin_src['search']['txt'][1]} LIKE ?)";
+  $countParams[] = $search;
   $countParams[] = "$search%";
-  $countParams[] = "%$search%";
-  $countTypes   .= "ss";
+  $countTypes   .= "is";
 }
 if ($search_block != 'none') {
-  $countWhere[]  = $joined ? "s.$col_block = ?" : "m.$col_block = ?";
+  $countWhere[]  = "{$origin_src['block']['alias']}.{$origin_src['block']['column']} = ?";
   $countParams[] = $search_block;
   $countTypes   .= "s";
 }
+$date = $origin_src['use_date'] ?? 'created_at';
 if ($from != '') {
-  $countWhere[]  = "m.created_at >= ?";
+  $countWhere[]  = "{$origin_src['ali']}.{$date} >= ?";
   $countParams[] = $from;
   $countTypes   .= "s";
 }
 if ($to != '') {
-  $countWhere[]  = "m.created_at <= ?";
+  $countWhere[]  = "{$origin_src['ali']}.{$date} <= ?";
   $countParams[] = $to . " 23:59:59";
   $countTypes   .= "s";
 }
 
-$countSql = "SELECT COUNT(*) FROM $tbl_main m";
-if ($joined) {
-  $countSql .= " JOIN $tbl_block AS s ON m.$block_id = s.id";
+$countSql = "SELECT COUNT(*) FROM {$origin_src['table']} AS {$origin_src['ali']}";
+foreach ($origin_src['joins'] as $j) {
+  $countSql .= " JOIN {$j[0]} AS {$j[1]} 
+                 ON {$j[2]} = {$j[3]}";
 }
+
 if (!empty($countWhere)) {
   $countSql .= " WHERE " . implode(" AND ", $countWhere);
 }
 $countStmt = $conn->prepare($countSql);
+if (!$countStmt) {
+  die("Prepare failed: " . $conn->error);
+}
 if (!empty($countParams)) {
   $countStmt->bind_param($countTypes, ...$countParams);
 }
 $countStmt->execute();
-$count = $countStmt->get_result()->fetch_row()[0];
+$result = $countStmt->get_result();
+if (!$result) {
+  die($conn->error);
+}
 
+$count = $result->fetch_row()[0];
+$limit = max(1, (int)$limit);
 $end_batch = ceil($count / $limit);
 if ($batch > $end_batch && $end_batch > 0) {
   $batch = $end_batch;
 }
 ?>
+
+

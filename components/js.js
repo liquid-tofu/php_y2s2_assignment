@@ -2,16 +2,28 @@ const curMainPath = window.location.pathname.split('/').pop();
 const fields = {
   'search': document.getElementById('search-bar'),
   'clear' : document.getElementById('clear'),
-  'block' : document.getElementById(blockName),
+  'block' : document.getElementById('block'),
   'from'  : document.querySelector('input[name="from"]'),
   'to'    : document.querySelector('input[name="to"]')
 };
 
+// update clear when page reload
+function updateClearButton() {
+  if (fields['clear'] && fields['search']) {
+    fields['clear'].style.display = fields['search'].value ? 'block' : 'none';
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  updateClearButton();
+});
+
 // handle input event
 function buildParams() {
-  const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams();
   for (const [key, el] of Object.entries(fields)) {
-    if (key !== 'clear' && el?.value) params.set(key, el.value);
+    if (key !== 'clear' && el?.value && el.value !== '' && el.value !== 'none') {
+      params.set(key, el.value);
+    }
   }
   return params;
 }
@@ -22,7 +34,10 @@ fields['search']?.addEventListener('input', () => {
 fields['search']?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); window.location.href = curMainPath + '?' + buildParams(); }
 });
-fields['clear']?.addEventListener('click', () => { window.location.href = curMainPath; });
+fields['clear']?.addEventListener('click', () => {
+  if (fields['search']) fields['search'].value = '';
+  window.location.href = curMainPath + '?' + buildParams();
+});
 
 ['block', 'from', 'to'].forEach(key => {
   fields[key]?.addEventListener('change', () => {
@@ -60,3 +75,6 @@ function sortColumn(displayName) {
   params.delete('per_page');
   window.location.href = curMainPath + '?' + params.toString();
 }
+
+
+

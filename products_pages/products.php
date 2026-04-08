@@ -1,14 +1,25 @@
 <?php
-$col_block = "name";
-$col_block_name = "category";
-$tbl_block = "categories";
-$block_id = "cat_id";
+$block = [
+  "table" => "categories",
+  "column" => "name",
+  "name" => "category",
+  "block_tbl" => "s"
+];
+$join = [
+  "joined" => true,
+  "join_tbl" => "categories",
+  "join_on" => "cat_id",
+  "join_ft" => "id",
+  "join_col" => "name",
+  "join_as" => "category"
+];
+$tbl = [
+  "table" => "products",
+  "sch_index" => "id",
+  "sch_text" => "name"
+];
 
-$tbl_main = "products";
-$search_for = ["id", "name"];
-$joined = true;
-
-$allowed_columns = ['id', 'name', 'desc', 'price', 'cost', 'category', 'created_at'];
+$allowed_columns = ['id', 'name', '`desc`', 'price', 'cost', 'category', 'created_at'];
 $heads = ["#", "ID", "Name", "Description", "Price", "Cost", "Category", "Created Time", "Actions"];
 $col_map = [
   'ID'           => 'id',
@@ -16,6 +27,7 @@ $col_map = [
   'Description'  => 'desc',
   'Price'        => 'price',
   'Cost'         => 'cost',
+  'Category'     => 'category',
   'Created Time' => 'created_at',
 ];
 
@@ -35,7 +47,7 @@ require('../components/page_logic/func_compat.php');
 
   <div class="content">
     <div id="content-container">
-      <h3>User Management</h3>
+      <h3>Product Management</h3>
       <hr>
       <?php
       // notification
@@ -75,7 +87,6 @@ require('../components/page_logic/func_compat.php');
 </div>
 
 <script>
-  const blockName = "<?php echo $block_name; ?>";
   const colMap    = <?php echo json_encode($col_map); ?>;
 </script>
 <script src="/components/js.js"></script>
