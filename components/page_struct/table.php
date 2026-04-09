@@ -52,8 +52,8 @@
       $page = $origin['page'] ?? '';
       echo "<td class='action-buttons'>
               <a href='edit{$page}.php?id=none' class='edit-btn'>Edit</a>
-              <a href='delete{$page}.php?id=none' class='delete-btn'
-                  onclick='return confirm(\"Are you sure?\")'>Delete</a>
+              <a href='delete.php?id=' class='delete-btn'
+                onclick='return confirm(\"Are you sure?\")'>Delete</a>
             </td>";
       echo "</tr>";
     }
