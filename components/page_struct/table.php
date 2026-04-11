@@ -53,6 +53,7 @@
       }
 
       $csrf_token = $_SESSION['csrf_token'];
+      $edit = ($origin['table'] != "so") ? "Edit" : "View";
       $id_col = $origin['search']['int'];
       $page = $_SERVER['REQUEST_URI'];
       $current_url = $_SERVER['REQUEST_URI'];
@@ -67,21 +68,26 @@
       } elseif (str_ends_with($file_name, 's')) {
         $file_name = substr($file_name, 0, -1);
       }
-      $edit_file = "edit{$file_name}.php";
+      $edit_file = ($origin['table'] != "so") ? "edit{$file_name}.php" : "view{$file_name}.php";
 
       echo "<td class='action-buttons'>
-        <a href='{$edit_file}?id={$row[$id_col]}&return_url={$return_q}' class='edit-btn'>Edit</a>
+        <a href='{$edit_file}?id={$row[$id_col]}&return_url={$return_q}' class='edit-btn' id='edit-btn'>{$edit}</a>
         <form method='POST' action='/components/mals/delete.php' style='display: inline;'>
           <input type='hidden' name='id' value='{$row[$id_col]}'>
           <input type='hidden' name='tbl' value='{$origin['table']}'>
           <input type='hidden' name='page' value='{$page}'>
           <input type='hidden' name='return_url' value='{$current_url}'>
-          <input type='hidden' name='csrf_token' value='{$csrf_token}'>
-          <button type='submit' class='delete-btn' onclick='return confirm(\"{$confirm_msg}\")'>Delete</button>
-        </form>
+          <input type='hidden' name='csrf_token' value='{$csrf_token}'>";
+      if ($origin['table'] != 'so') {
+        echo "<button type='submit' class='delete-btn' onclick='return confirm(\"{$confirm_msg}\")'>Delete</button>";
+      }
+      echo "</form>
       </td>";
     }
   }
   ?>
 </tbody>
 </table>
+<script>
+  const table = <?= json_encode($origin['table']) ?>;
+</script>

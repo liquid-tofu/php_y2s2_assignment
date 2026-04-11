@@ -15,6 +15,9 @@ function updateClearButton() {
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
+  if (table == "so") {
+    document.getElementById('export-btn').style.left = "0";
+  }
   updateClearButton();
 });
 

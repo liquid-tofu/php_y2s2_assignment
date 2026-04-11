@@ -38,15 +38,12 @@ require('../components/page_logic/func_compat.php');
       <?php require(__DIR__ . '/../components/page_struct/table.php'); ?>      
 
       <div id="pagination-container">
-        <a href="addso.php" class="add-btn">
-          <i class="bi bi-plus-circle"></i>Add
-        </a>
         <?php
         $export_params = $_GET;
         $export_params['export'] = 'csv';
         $export_url = 'export_so.php?' . http_build_query($export_params);
         ?>
-        <a href="<?= htmlspecialchars($export_url) ?>" class="export-btn">
+        <a href="<?= htmlspecialchars($export_url) ?>" class="export-btn" id="export-btn">
           <i class="bi bi-download"></i>Export
         </a>
         <?php

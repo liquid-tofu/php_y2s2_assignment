@@ -38,6 +38,9 @@
   border-radius: 5px;
   cursor: pointer;
 }
+#view-btn {
+  margin: 10px 0;
+}
 #update-btn {
   background: #009ea8;
   color: white;
