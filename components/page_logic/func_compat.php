@@ -27,7 +27,7 @@ function batch_btns($batch, $end_batch) {
   echo "</select>";
 }
 
-function display($conn, $where, $params, $types, $config) {
+function display($conn, $where, $params, $types, $config, $mode = 'all', $id = null) {
   global $sort_by, $sort_order, $batch, $limit;
   $batch = max(1, (int)$batch);
   $limit = max(1, (int)$limit);
@@ -42,6 +42,20 @@ function display($conn, $where, $params, $types, $config) {
     $select_list[] = "{$temp} AS `{$values[1]}`";
   }
   $select = implode(", ", $select_list);
+
+  if ($mode === 'single' && $id) {
+    $id_col = $config['search']['int'];
+    $sql = "SELECT $select FROM {$config['table']} AS m";
+    
+    foreach ($config['joins'] as $j) {
+      $sql .= " JOIN {$j[0]} AS {$j[1]} ON {$j[2]} = {$j[3]}";
+    }
+    $sql .= " WHERE $id_col = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
+  }
 
   // sort bs
   $first_col = reset($config['columns']);

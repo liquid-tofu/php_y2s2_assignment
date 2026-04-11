@@ -1,35 +1,5 @@
 <?php
-$origin = [
-  'page' => 'purchase order',
-  'table' => 'po',
-  'use_date' => 'order_date',
-  'search' => [
-    'int' => 'm.id',
-    'txt' => 's.name'
-  ],
-  'block' => [
-    'table' => 'suppliers',
-    'ali' => 's',
-    'column' => 'name',
-    'namis' => 'supplier'
-  ],
-  'columns' => [
-    'ID' => [false, 'm.id'],
-    'Supplier' => [true, 's.name'],
-    'Order Date' => [false, 'm.order_date'],
-    'Status' => [true, 'm.status'],
-    'Total Amount' => [false, 'm.total_amount'],
-    'Created At' => [false, 'm.created_at']
-  ],
-  'joins' => [
-    ['suppliers', 's', 'm.supplier_id', 's.id']
-  ]
-];
-
-$col_map = [];
-foreach ($origin['columns'] as $key => $arr) {
-  $col_map[$key] = $arr[1];
-}
+require('config.php');
 
 require('../components/header.php');
 require('../components/sidebar.php');
@@ -68,8 +38,16 @@ require('../components/page_logic/func_compat.php');
       <?php require(__DIR__ . '/../components/page_struct/table.php'); ?>      
 
       <div id="pagination-container">
-        <a href="addstock.php" class="add-btn">
+        <a href="addpo.php" class="add-btn">
           <i class="bi bi-plus-circle"></i>Add
+        </a>
+        <?php
+        $export_params = $_GET;
+        $export_params['export'] = 'csv';
+        $export_url = 'export_po.php?' . http_build_query($export_params);
+        ?>
+        <a href="<?= htmlspecialchars($export_url) ?>" class="export-btn">
+          <i class="bi bi-download"></i>Export
         </a>
         <?php
         if ($count > 0) {

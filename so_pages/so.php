@@ -1,33 +1,5 @@
 <?php
-$origin = [
-  'page' => 'sale order',
-  'table' => 'so',
-  'use_date' => 'order_date',
-  'search' => [
-    'int' => 'm.id',
-    'txt' => 'm.cus_name'
-  ],
-  'block' => [
-    'table' => 'so',
-    'ali' => 'm',
-    'column' => 'status',
-    'namis' => 'status'
-  ],
-  'columns' => [
-    'ID' => [false, 'm.id'],
-    'Customer Name' => [true, 'm.cus_name'],
-    'Customer Email' => [true, 'm.cus_email'],
-    'Order Date' => [false, 'm.order_date'],
-    'Status' => [true, 'm.status'],
-    'Total Amount' => [false, 'm.total_amount']
-  ],
-  'joins' => []
-];
-
-$col_map = [];
-foreach ($origin['columns'] as $key => $arr) {
-  $col_map[$key] = $arr[1];
-}
+require('config.php');
 
 require('../components/header.php');
 require('../components/sidebar.php');
@@ -66,8 +38,16 @@ require('../components/page_logic/func_compat.php');
       <?php require(__DIR__ . '/../components/page_struct/table.php'); ?>      
 
       <div id="pagination-container">
-        <a href="addstock.php" class="add-btn">
+        <a href="addso.php" class="add-btn">
           <i class="bi bi-plus-circle"></i>Add
+        </a>
+        <?php
+        $export_params = $_GET;
+        $export_params['export'] = 'csv';
+        $export_url = 'export_so.php?' . http_build_query($export_params);
+        ?>
+        <a href="<?= htmlspecialchars($export_url) ?>" class="export-btn">
+          <i class="bi bi-download"></i>Export
         </a>
         <?php
         if ($count > 0) {

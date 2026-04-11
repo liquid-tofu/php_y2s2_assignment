@@ -1,28 +1,5 @@
 <?php
-$origin = [
-  'page' => 'supplier',
-  'table' => 'suppliers',
-  'use_date' => null,
-  'search' => [
-    'int' => 'm.id',
-    'txt' => 'm.name'
-  ],
-  'block' => null,
-  'columns' => [
-    'ID' => [false, 'm.id'],
-    'Name' => [true, 'm.name'],
-    'Contact Person' => [true, 'm.contact_person'],
-    'Email' => [true, 'm.email'],
-    'Phone' => [true, 'm.phone'],
-    'Address' => [true, 'm.address']
-  ],
-  'joins' => []
-];
-
-$col_map = [];
-foreach ($origin['columns'] as $key => $arr) {
-  $col_map[$key] = $arr[1];
-}
+require('config.php');
 
 require('../components/header.php');
 require('../components/sidebar.php');
@@ -59,8 +36,16 @@ require('../components/page_logic/func_compat.php');
       <?php require(__DIR__ . '/../components/page_struct/table.php'); ?>      
 
       <div id="pagination-container">
-        <a href="addstock.php" class="add-btn">
+        <a href="addsupplier.php" class="add-btn">
           <i class="bi bi-plus-circle"></i>Add
+        </a>
+        <?php
+        $export_params = $_GET;
+        $export_params['export'] = 'csv';
+        $export_url = 'export_supplier.php?' . http_build_query($export_params);
+        ?>
+        <a href="<?= htmlspecialchars($export_url) ?>" class="export-btn">
+          <i class="bi bi-download"></i>Export
         </a>
         <?php
         if ($count > 0) {

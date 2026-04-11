@@ -1,4 +1,7 @@
 <?php
+$origin = $origin ?? null;
+$has_block = is_array($origin) && !empty($origin['block']) && is_array($origin['block']);
+
 $search       = $_GET['search']   ?? $_POST['search']     ?? '';
 $search_block = $_GET['block']    ?? $_POST['block']      ?? 'none';
 $from         = $_GET['from']     ?? $_POST['from']       ?? '';
@@ -17,7 +20,7 @@ if ($search != '') {
   $countParams[] = "$search%";
   $countTypes   .= "is";
 }
-if ($search_block != 'none') {
+if ($has_block && $search_block != 'none') {
   $countWhere[]  = "{$origin['block']['ali']}.{$origin['block']['column']} = ?";
   $countParams[] = $search_block;
   $countTypes   .= "s";
@@ -58,6 +61,7 @@ if (!$result) {
 }
 
 $count = $result->fetch_row()[0];
+// prevent from getting past last page
 $limit = max(1, (int)$limit);
 $end_batch = ceil($count / $limit);
 if ($batch > $end_batch && $end_batch > 0) {

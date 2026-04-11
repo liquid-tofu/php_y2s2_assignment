@@ -4,6 +4,7 @@
     <select name="block" id="block">
       <option value="none" <?= ($search_block == 'none') ? 'selected' : '' ?>>None</option>
       <?php
+      // select existed group
       $columns = [];
       $list = $conn->query("
         SELECT DISTINCT {$origin['block']['column']} 
@@ -11,6 +12,7 @@
       ");
       if ($list) {
         $rows = $list->fetch_all(MYSQLI_ASSOC);
+        // extract as normal list
         $values = array_column($rows, $origin['block']['column']);
       }
 

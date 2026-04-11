@@ -37,12 +37,24 @@ function updateStock($conn, $product_id, $quantity) {
   return $stmt->execute();
 }
 
+$all_products = getProducts($conn);
+$product_map = [];
+foreach ($all_products as $p) {
+  $product_map[(int)$p['id']] = $p;
+}
+
+$cus_name = trim($_POST['cus_name'] ?? '');
+$cus_email = trim($_POST['cus_email'] ?? '');
+$order_date = $_POST['order_date'] ?? date('Y-m-d');
+$status = trim($_POST['status'] ?? 'PENDING');
+$products = $_POST['products'] ?? [''];
+$quantities = $_POST['quantities'] ?? [1];
+$unit_prices = $_POST['unit_prices'] ?? [''];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $cus_name = trim($_POST['cus_name'] ?? '');
-  $cus_email = trim($_POST['cus_email'] ?? '');
-  $order_date = $_POST['order_date'] ?? '';
-  $products = $_POST['products'] ?? [];
-  $quantities = $_POST['quantities'] ?? [];
+  $allowed_status = ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'];
+  $items = [];
+  $total_amount = 0;
 
   if (empty($cus_name)) {
     $error = 'Customer name is required.';
@@ -52,58 +64,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $error = 'Please enter a valid email address.';
   } elseif (empty($order_date)) {
     $error = 'Please select order date.';
+  } elseif (!in_array($status, $allowed_status, true)) {
+    $error = 'Invalid status.';
   } else {
-    $has_product = false;
-    $total_amount = 0;
-    $items = [];
+    foreach ($products as $index => $product_id_raw) {
+      $product_id = (int)$product_id_raw;
+      $quantity = (int)($quantities[$index] ?? 0);
+      $unit_price = (float)($unit_prices[$index] ?? 0);
 
-    foreach ($products as $index => $product_id) {
-      if (empty($product_id)) continue;
-      
-      $quantity = intval($quantities[$index] ?? 0);
-      if ($product_id && $quantity > 0) {
-        if (!checkStock($conn, $product_id, $quantity)) {
-          $error = 'Insufficient stock for product ID ' . $product_id;
-          break;
-        }
-        $has_product = true;
-        $sql = "SELECT price FROM products WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $product_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result && $result->num_rows > 0) {
-          $product = $result->fetch_assoc();
-          $unit_price = $product['price'];
-          $item_total = $quantity * $unit_price;
-          $total_amount += $item_total;
-          $items[] = [
-            'product_id' => $product_id,
-            'quantity' => $quantity,
-            'unit_price' => $unit_price
-          ];
-        }
+      if ($product_id <= 0 && $quantity <= 0 && $unit_price <= 0) {
+        continue;
       }
+      if ($product_id <= 0 || $quantity <= 0 || $unit_price <= 0) {
+        $error = 'Each item row must have product, quantity and unit price.';
+        break;
+      }
+      if (!checkStock($conn, $product_id, $quantity)) {
+        $error = 'Insufficient stock for selected product.';
+        break;
+      }
+      $items[] = [
+        'product_id' => $product_id,
+        'quantity' => $quantity,
+        'unit_price' => $unit_price
+      ];
+      $total_amount += ($quantity * $unit_price);
     }
 
-    if (!$has_product) {
+    if ($error === '' && count($items) === 0) {
       $error = 'Please add at least one product item.';
-    } elseif (!$error) {
+    } elseif ($error === '') {
       $conn->begin_transaction();
       try {
-        $sql = "INSERT INTO so (cus_name, cus_email, order_date, total_amount) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO so (cus_name, cus_email, order_date, status, total_amount) VALUES (?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssd", $cus_name, $cus_email, $order_date, $total_amount);
-        
+        $stmt->bind_param("ssssd", $cus_name, $cus_email, $order_date, $status, $total_amount);
         if (!$stmt->execute()) {
           throw new Exception('Failed to insert order');
         }
-        
+
         $so_id = $conn->insert_id;
 
         $item_sql = "INSERT INTO soi (so_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)";
         $item_stmt = $conn->prepare($item_sql);
-        
+
         foreach ($items as $item) {
           $item_stmt->bind_param("iiid", $so_id, $item['product_id'], $item['quantity'], $item['unit_price']);
           if (!$item_stmt->execute()) {
@@ -125,18 +129,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
-$all_products = getProducts($conn);
-
 require('../components/header.php');
 ?>
 <link rel="stylesheet" href="/styles/content.css">
+<link rel="stylesheet" href="/styles/add.css">
 <?php require('../components/sidebar.php'); ?>
 
 <div class="main">
   <div class="topbar">
     <h3>Stock Management System</h3>
     <div class="user">
-      <i class="bi bi-person-circle"></i> Administrator
+      <i class="bi bi-person-circle"></i>
+      <?= htmlspecialchars($_SESSION['username'] ?? 'Guest') ?>
     </div>
   </div>
 
@@ -149,266 +153,182 @@ require('../components/header.php');
         <div class="message error"><?= htmlspecialchars($error) ?></div>
       <?php endif; ?>
 
-      <form action="addso.php" method="POST" id="add-form" autocomplete="off">
-        <div class="form-row">
-          <div class="form-group half">
-            <label for="cus_name">Customer Name *</label>
-            <input type="text" name="cus_name" id="cus_name" value="<?= htmlspecialchars($_POST['cus_name'] ?? '') ?>" required>
-          </div>
-          <div class="form-group half">
-            <label for="cus_email">Customer Email *</label>
-            <input type="email" name="cus_email" id="cus_email" value="<?= htmlspecialchars($_POST['cus_email'] ?? '') ?>" required>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="order_date">Order Date *</label>
-          <input type="date" name="order_date" id="order_date" value="<?= htmlspecialchars($_POST['order_date'] ?? date('Y-m-d')) ?>" required>
-        </div>
-
-        <h4>Order Items</h4>
-        <div id="items-container">
-          <div class="item-row">
-            <div class="form-group half">
-              <label>Product</label>
-              <select name="products[]" class="product-select" required>
-                <option value="">Select Product</option>
-                <?php foreach ($all_products as $prod): ?>
-                  <option value="<?= $prod['id'] ?>" data-price="<?= $prod['price'] ?>">
-                    <?= htmlspecialchars($prod['name']) ?> - $<?= number_format($prod['price'], 2) ?>
-                  </option>
+      <form action="addso.php" method="POST" class="add-form po-form" autocomplete="off">
+        <section class="po-section">
+          <h4>Sale Info</h4>
+          <div class="po-grid">
+            <div>
+              <label for="cus_name">Customer Name</label>
+              <input type="text" name="cus_name" id="cus_name" value="<?= htmlspecialchars($cus_name) ?>" required>
+            </div>
+            <div>
+              <label for="cus_email">Customer Email</label>
+              <input type="email" name="cus_email" id="cus_email" value="<?= htmlspecialchars($cus_email) ?>" required>
+            </div>
+            <div>
+              <label for="order_date">Order Date</label>
+              <input type="date" name="order_date" id="order_date" value="<?= htmlspecialchars($order_date) ?>" required>
+            </div>
+            <div>
+              <label for="status">Status</label>
+              <select name="status" id="status" required>
+                <?php foreach (['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'] as $st): ?>
+                  <option value="<?= $st ?>" <?= ($status === $st) ? 'selected' : '' ?>><?= $st ?></option>
                 <?php endforeach; ?>
               </select>
             </div>
-            <div class="form-group half">
-              <label>Quantity</label>
-              <input type="number" name="quantities[]" class="quantity" min="1" value="1">
-            </div>
-            <div class="form-group half">
-              <label>Unit Price</label>
-              <input type="text" class="unit-price-display" readonly>
-            </div>
-            <div class="form-group half">
-              <label>Total</label>
-              <input type="text" class="item-total" readonly>
-            </div>
-            <button type="button" class="remove-item" style="display:none;">Remove</button>
           </div>
-        </div>
-        <button type="button" id="add-item" class="secondary-btn">+ Add Item</button>
-
-        <div class="form-group total-group">
-          <label>Grand Total:</label>
-          <span id="grand-total">$0.00</span>
-        </div>
-
-        <div class="form-buttons">
-          <button type="submit" class="submit-btn">Create Order</button>
-          <a href="so.php" class="cancel-btn">Cancel</a>
-        </div>
+        </section>
+        <section class="po-section">
+          <h4>Item List</h4>
+          <?php $row_count = max(count($products), 1); ?>
+          <div id="items-container">
+            <?php for ($i = 0; $i < $row_count; $i++): ?>
+              <?php
+                $pid = (int)($products[$i] ?? 0);
+                $qty = (int)($quantities[$i] ?? 1);
+                $upr = (float)($unit_prices[$i] ?? (($pid && isset($product_map[$pid])) ? (float)$product_map[$pid]['price'] : 0));
+              ?>
+              <div class="item-row">
+                <div class="item-col item-product">
+                  <label>Product</label>
+                  <select name="products[]" class="product-select" required>
+                    <option value="">Select Product</option>
+                    <?php foreach ($all_products as $prod): ?>
+                      <option value="<?= (int)$prod['id'] ?>" data-price="<?= htmlspecialchars((string)$prod['price']) ?>" <?= ($pid === (int)$prod['id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($prod['name']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+                <div class="item-col">
+                  <label>Qty</label>
+                  <input type="number" name="quantities[]" class="quantity" min="1" value="<?= max($qty, 1) ?>" required>
+                </div>
+                <div class="item-col">
+                  <label>Unit Price</label>
+                  <input type="number" step="0.01" name="unit_prices[]" class="unit-price" min="0.01" value="<?= $upr > 0 ? htmlspecialchars(number_format($upr, 2, '.', '')) : '' ?>" required>
+                </div>
+                <div class="item-col">
+                  <label>Row Total</label>
+                  <input type="text" class="item-total" readonly>
+                </div>
+                <div class="item-col item-action">
+                  <label>&nbsp;</label>
+                  <button type="button" class="remove-item">Remove</button>
+                </div>
+              </div>
+            <?php endfor; ?>
+          </div>
+          <template id="item-row-template">
+            <div class="item-row">
+              <div class="item-col item-product">
+                <label>Product</label>
+                <select name="products[]" class="product-select" required>
+                  <option value="">Select Product</option>
+                  <?php foreach ($all_products as $prod): ?>
+                    <option value="<?= (int)$prod['id'] ?>" data-price="<?= htmlspecialchars((string)$prod['price']) ?>">
+                      <?= htmlspecialchars($prod['name']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <div class="item-col">
+                <label>Qty</label>
+                <input type="number" name="quantities[]" class="quantity" min="1" value="1" required>
+              </div>
+              <div class="item-col">
+                <label>Unit Price</label>
+                <input type="number" step="0.01" name="unit_prices[]" class="unit-price" min="0.01" value="" required>
+              </div>
+              <div class="item-col">
+                <label>Row Total</label>
+                <input type="text" class="item-total" readonly>
+              </div>
+              <div class="item-col item-action">
+                <label>&nbsp;</label>
+                <button type="button" class="remove-item">Remove</button>
+              </div>
+            </div>
+          </template>
+          <button type="button" id="add-item" class="po-add-item-btn">+ Add Item</button>
+        </section>
+        <section class="po-summary">
+          <label>Total Value</label>
+          <input type="text" id="grand-total" readonly value="$0.00">
+        </section>
+        <section>
+          <a href="so.php" id="cancel-btn">Cancel</a>
+          <button type="submit" id="add-btn">Create Order</button>
+        </section>
       </form>
     </div>
   </div>
 </div>
 
 <script>
-const allProducts = <?php echo json_encode($all_products); ?>;
+const allProducts = <?= json_encode($all_products) ?>;
+const itemsContainer = document.getElementById('items-container');
+const itemTemplate = document.getElementById('item-row-template');
 
-function calculateItemTotal(row) {
+function rowTotal(row) {
   const qty = parseFloat(row.querySelector('.quantity').value) || 0;
-  const priceInput = row.querySelector('.unit-price-display');
-  let price = 0;
-  if (priceInput.value) {
-    price = parseFloat(priceInput.value.replace('$', '')) || 0;
-  }
+  const price = parseFloat(row.querySelector('.unit-price').value) || 0;
   const total = qty * price;
   row.querySelector('.item-total').value = '$' + total.toFixed(2);
   return total;
 }
 
-function calculateGrandTotal() {
-  let grand = 0;
-  document.querySelectorAll('.item-row').forEach(row => {
-    grand += calculateItemTotal(row);
+function refreshTotal() {
+  const rows = document.querySelectorAll('.item-row');
+  let sum = 0;
+  rows.forEach(row => {
+    sum += rowTotal(row);
+    const removeBtn = row.querySelector('.remove-item');
+    removeBtn.style.display = rows.length > 1 ? 'inline-block' : 'none';
   });
-  document.getElementById('grand-total').textContent = '$' + grand.toFixed(2);
+  document.getElementById('grand-total').value = '$' + sum.toFixed(2);
 }
 
-document.getElementById('add-item').addEventListener('click', function() {
-  const container = document.getElementById('items-container');
-  const originalRow = container.querySelector('.item-row');
-  const newRow = originalRow.cloneNode(true);
-  newRow.querySelectorAll('input, select').forEach(el => {
-    if (el.classList.contains('product-select')) el.value = '';
-    if (el.classList.contains('quantity')) el.value = '1';
-    if (el.classList.contains('unit-price-display')) el.value = '';
-    if (el.classList.contains('item-total')) el.value = '';
+function bindRow(row) {
+  const productSelect = row.querySelector('.product-select');
+  const quantity = row.querySelector('.quantity');
+  const unitPrice = row.querySelector('.unit-price');
+  const removeBtn = row.querySelector('.remove-item');
+
+  productSelect.addEventListener('change', () => {
+    const selected = allProducts.find(p => String(p.id) === productSelect.value);
+    if (selected) {
+      if (!unitPrice.value || parseFloat(unitPrice.value) <= 0) {
+        unitPrice.value = parseFloat(selected.price).toFixed(2);
+      }
+    }
+    refreshTotal();
   });
-  newRow.querySelector('.remove-item').style.display = 'inline-block';
-  container.appendChild(newRow);
-  attachRowEvents(newRow);
+  quantity.addEventListener('input', refreshTotal);
+  unitPrice.addEventListener('input', refreshTotal);
+  removeBtn.addEventListener('click', () => {
+    if (document.querySelectorAll('.item-row').length <= 1) return;
+    row.remove();
+    refreshTotal();
+  });
+}
+
+document.querySelectorAll('.item-row').forEach(bindRow);
+
+document.getElementById('add-item').addEventListener('click', () => {
+  const first = document.querySelector('.item-row');
+  const clone = first ? first.cloneNode(true) : itemTemplate.content.firstElementChild.cloneNode(true);
+  clone.querySelector('.product-select').value = '';
+  clone.querySelector('.quantity').value = '1';
+  clone.querySelector('.unit-price').value = '';
+  clone.querySelector('.item-total').value = '$0.00';
+  itemsContainer.appendChild(clone);
+  bindRow(clone);
+  refreshTotal();
 });
 
-function attachRowEvents(row) {
-  const productSelect = row.querySelector('.product-select');
-  const unitPriceDisplay = row.querySelector('.unit-price-display');
-  const quantity = row.querySelector('.quantity');
-
-  productSelect.addEventListener('change', function() {
-    const selected = allProducts.find(p => p.id == this.value);
-    if (selected) {
-      unitPriceDisplay.value = '$' + parseFloat(selected.price).toFixed(2);
-      calculateItemTotal(row);
-      calculateGrandTotal();
-    } else {
-      unitPriceDisplay.value = '';
-      row.querySelector('.item-total').value = '';
-      calculateGrandTotal();
-    }
-  });
-
-  quantity.addEventListener('input', function() {
-    calculateItemTotal(row);
-    calculateGrandTotal();
-  });
-
-  const removeBtn = row.querySelector('.remove-item');
-  if (removeBtn) {
-    removeBtn.addEventListener('click', function() {
-      row.remove();
-      calculateGrandTotal();
-    });
-  }
-}
-
-document.querySelectorAll('.item-row').forEach(row => attachRowEvents(row));
+refreshTotal();
 </script>
-
-<style>
-.form-group {
-  margin-bottom: 20px;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #333;
-}
-.form-group input,
-.form-group select {
-  width: 100%;
-  max-width: 400px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-}
-.form-row {
-  display: flex;
-  gap: 20px;
-}
-.form-group.half {
-  flex: 1;
-}
-.form-group.half input,
-.form-group.half select {
-  max-width: 100%;
-}
-.item-row {
-  display: flex;
-  gap: 15px;
-  align-items: flex-end;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-}
-.item-row .form-group {
-  margin-bottom: 0;
-  flex: 1;
-}
-.item-row .form-group.half {
-  flex: 1;
-  min-width: 120px;
-}
-.item-row .form-group.half input,
-.item-row .form-group.half select {
-  max-width: 100%;
-}
-.remove-item {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  height: 38px;
-}
-.secondary-btn {
-  background: #6c757d;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-bottom: 20px;
-}
-.secondary-btn:hover {
-  background: #5a6268;
-}
-.total-group {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 2px solid #ddd;
-  font-size: 18px;
-  font-weight: bold;
-}
-#grand-total {
-  color: #00BFCB;
-  font-size: 22px;
-}
-.form-buttons {
-  margin-top: 30px;
-  display: flex;
-  gap: 15px;
-}
-.submit-btn {
-  background: #00BFCB;
-  color: white;
-  padding: 10px 24px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-.submit-btn:hover {
-  background: #00a5b0;
-}
-.cancel-btn {
-  background: #6c757d;
-  color: white;
-  padding: 10px 24px;
-  text-decoration: none;
-  border-radius: 6px;
-  font-size: 14px;
-}
-.cancel-btn:hover {
-  background: #5a6268;
-}
-.message {
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-}
-.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-.unit-price-display {
-  background: #f5f5f5;
-}
-* label {
-  color: #b2b2b2 !important;
-}
-</style>
 
 <?php require('../components/footer.php'); ?>

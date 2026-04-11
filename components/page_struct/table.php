@@ -10,6 +10,7 @@
       </svg>
     </button>';
 
+    // make borwser consider palin txt
     echo "<td>" . htmlspecialchars('#') . "</td>";
     foreach (array_keys($origin['columns']) as $i => $col) {
       $db_col   = $col_map[$col] ?? '';
@@ -21,6 +22,7 @@
         $up_col   = ($sort_order === 'ASC')  ? '#00BFCB' : '#fff';
         $down_col = ($sort_order === 'DESC') ? '#00BFCB' : '#fff';
       }
+      // fill placeholder
       echo "<th><div class='head'>$col" . sprintf($arrow_tpl, $cls, $col, $up_col, $down_col) . "</div></th>";
     }
     echo "<td>" . htmlspecialchars('Actions') . "</td>";
@@ -43,19 +45,41 @@
       foreach ($origin['columns'] as $values) {
         $col_key = $values[1];
         $value = $row[$col_key] ?? '';
-        if ($values[0]) {
+
+        if (!in_array(($col_key), ['m.username', 'm.email', 'm.cus_email'])) {
           $value = ucwords(strtolower($value));
         }
         echo "<td>" . htmlspecialchars($value) . "</td>";
       }
 
-      $page = $origin['page'] ?? '';
+      $csrf_token = $_SESSION['csrf_token'];
+      $id_col = $origin['search']['int'];
+      $page = $_SERVER['REQUEST_URI'];
+      $current_url = $_SERVER['REQUEST_URI'];
+      // encode url
+      $return_q = rawurlencode($current_url);
+      $confirm_msg = "Are you sure?\\nThe deleted data cannot be recovered.";
+      $filename = basename($_SERVER['PHP_SELF'], '.php');
+      $file_name = str_replace('_', '', $filename);
+      
+      if (str_ends_with($file_name, 'ies')) {
+        $file_name = substr($file_name, 0, -3) . 'y';
+      } elseif (str_ends_with($file_name, 's')) {
+        $file_name = substr($file_name, 0, -1);
+      }
+      $edit_file = "edit{$file_name}.php";
+
       echo "<td class='action-buttons'>
-              <a href='edit{$page}.php?id=none' class='edit-btn'>Edit</a>
-              <a href='delete.php?id=' class='delete-btn'
-                onclick='return confirm(\"Are you sure?\")'>Delete</a>
-            </td>";
-      echo "</tr>";
+        <a href='{$edit_file}?id={$row[$id_col]}&return_url={$return_q}' class='edit-btn'>Edit</a>
+        <form method='POST' action='/components/mals/delete.php' style='display: inline;'>
+          <input type='hidden' name='id' value='{$row[$id_col]}'>
+          <input type='hidden' name='tbl' value='{$origin['table']}'>
+          <input type='hidden' name='page' value='{$page}'>
+          <input type='hidden' name='return_url' value='{$current_url}'>
+          <input type='hidden' name='csrf_token' value='{$csrf_token}'>
+          <button type='submit' class='delete-btn' onclick='return confirm(\"{$confirm_msg}\")'>Delete</button>
+        </form>
+      </td>";
     }
   }
   ?>

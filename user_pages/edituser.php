@@ -3,10 +3,11 @@ require('../db.php');
 session_start();
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$return_url = $_GET['return_url'] ?? ($_POST['return_url'] ?? 'user.php');
 
 if ($id <= 0) {
   $_SESSION['message'] = 'Invalid user ID.';
-  header('Location: user.php');
+  header("Location: $return_url");
   exit;
 }
 
@@ -18,7 +19,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
   $_SESSION['message'] = 'User not found.';
-  header('Location: user.php');
+  header("Location: $return_url");
   exit;
 }
 
@@ -68,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       if ($stmt->execute()) {
         $_SESSION['message'] = 'User updated successfully!';
-        header('Location: user.php');
+        header("Location: $return_url");
         exit;
       } else {
         $error = 'Something went wrong. Please try again.';
@@ -86,7 +87,8 @@ require('../components/header.php');
   <div class="topbar">
     <h3>Stock Management System</h3>
     <div class="user">
-      <i class="bi bi-person-circle"></i> Administrator
+      <i class="bi bi-person-circle"></i>
+      <?= htmlspecialchars($_SESSION['username'] ?? 'Guest') ?>
     </div>
   </div>
 
@@ -99,7 +101,8 @@ require('../components/header.php');
         <div class="message error"><?= htmlspecialchars($error) ?></div>
       <?php endif; ?>
 
-      <form action="edituser.php?id=<?= $id ?>" method="POST" id="edit-form">
+      <form action="edituser.php?id=<?= $id ?>" method="POST" class="edit-form">
+        <input type="hidden" name="return_url" value="<?= htmlspecialchars($return_url) ?>">
         <div class="form-group">
           <label for="username">Username *</label>
           <input type="text" name="username" id="username" value="<?= htmlspecialchars($user['username']) ?>" required>
@@ -131,74 +134,12 @@ require('../components/header.php');
         </div>
 
         <div class="form-buttons">
-          <button type="submit" class="submit-btn">Update User</button>
-          <a href="user.php" class="cancel-btn">Cancel</a>
+          <a href="<?= htmlspecialchars($return_url) ?>" id="cancel-btn">Cancel</a>
+          <button type="submit" id="update-btn">Update User</button>
         </div>
       </form>
     </div>
   </div>
 </div>
-
-<style>
-.form-group {
-  margin-bottom: 20px;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #333;
-}
-.form-group input,
-.form-group select {
-  width: 100%;
-  max-width: 400px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-}
-.form-buttons {
-  margin-top: 30px;
-  display: flex;
-  gap: 15px;
-}
-.submit-btn {
-  background: #00BFCB;
-  color: white;
-  padding: 10px 24px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-.submit-btn:hover {
-  background: #00a5b0;
-}
-.cancel-btn {
-  background: #6c757d;
-  color: white;
-  padding: 10px 24px;
-  text-decoration: none;
-  border-radius: 6px;
-  font-size: 14px;
-}
-.cancel-btn:hover {
-  background: #5a6268;
-}
-.message {
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-}
-.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-* label {
-  color: #b2b2b2 !important;
-}
-</style>
 
 <?php require('../components/footer.php'); ?>

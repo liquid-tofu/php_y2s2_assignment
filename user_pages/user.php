@@ -1,32 +1,5 @@
 <?php
-$origin = [
-  'page' => 'user',
-  'table' => 'users',
-  'use_date' => 'created_at',
-  'search' => [
-    'int' => 'm.id',
-    'txt' => 'm.username'
-  ],
-  'block' => [
-    'table' => 'users',
-    'ali' => 'm',
-    'column' => 'role',
-    'namis' => 'role'
-  ],
-  'columns' => [
-    'ID' => [false, 'm.id'],
-    'Username' => [true, 'm.username'],
-    'Email' => [true, 'm.email'],
-    'Role' => [true, 'm.role'],
-    'Created At' => [false, 'm.created_at']
-  ],
-  'joins' => []
-];
-
-$col_map = [];
-foreach ($origin['columns'] as $key => $arr) {
-  $col_map[$key] = $arr[1];
-}
+require('config.php');
 
 require('../components/header.php');
 require('../components/sidebar.php');
@@ -65,8 +38,16 @@ require('../components/page_logic/func_compat.php');
       <?php require(__DIR__ . '/../components/page_struct/table.php'); ?>      
 
       <div id="pagination-container">
-        <a href="addstock.php" class="add-btn">
+        <a href="adduser.php" class="add-btn">
           <i class="bi bi-plus-circle"></i>Add
+        </a>
+        <?php
+        $export_params = $_GET;
+        $export_params['export'] = 'csv';
+        $export_url = 'export_user.php?' . http_build_query($export_params);
+        ?>
+        <a href="<?= htmlspecialchars($export_url) ?>" class="export-btn">
+          <i class="bi bi-download"></i>Export
         </a>
         <?php
         if ($count > 0) {

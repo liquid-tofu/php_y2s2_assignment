@@ -8,6 +8,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="/styles/com.css">
   <link rel="stylesheet" href="/styles/content.css">
+  <link rel="stylesheet" href="/styles/edit.css">
+  <link rel="stylesheet" href="/styles/add.css">
 </head>
 <body>
 
@@ -16,10 +18,14 @@
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
+// Cross-Site Request Forgery??
+if (empty($_SESSION['csrf_token'])) {
+  $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
-require(__DIR__ . '/../db.php');
+require_once(__DIR__ . '/../db.php');
 
-// no session but have cookie store
+// remember me baby
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['user_id'])) {
   $_SESSION['user_id'] = $_COOKIE['user_id'];
 
@@ -44,9 +50,12 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
+// for batch config
 $per_page   = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
 $limit      = $per_page;
 $batch      = isset($_GET['batch'])    ? (int)$_GET['batch']    : 1;
 
-require(__DIR__ . '/../components/page_logic/count_compat.php');
+if (isset($origin)) {
+  require(__DIR__ . '/../components/page_logic/count_compat.php');
+}
 ?>

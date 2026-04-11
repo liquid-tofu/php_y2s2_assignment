@@ -2,8 +2,6 @@
 session_start();
 require_once 'db.php';
 
-$message = '';
-
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['user_id'])) {
   $user_id = $_COOKIE['user_id'];
   
@@ -45,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: index.php");
     exit;
   } else {
-    $message = "Invalid username or password";
+    $_SESSION['message'] = 'Invalid username or password!';
   }
 }
 ?>
@@ -57,13 +55,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="/styles/login.css">
+    <style>
+      .popup-message {
+        position: fixed;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #444;
+        color: white;
+        padding: 8px 18px;
+        border-radius: 6px;
+        animation: fadeOut 3s forwards;
+        z-index: 1000;
+      }
+      @keyframes fadeOut {
+        0% { opacity: 1; }
+        70% { opacity: 1; }
+        100% { opacity: 0; display: none; }
+      }
+    </style>
 </head>
 <body>
+  <?php
+  // notification
+  if (isset($_SESSION['message'])) {
+    echo '<div class="popup-message">' . htmlspecialchars($_SESSION['message']) . '</div>';
+    unset($_SESSION['message']);
+  }
+  ?>
+  
   <div id="login-container">
     <h2>Login</h2>
-    <?php if ($message): ?>
-      <div class="message"><?= $message ?></div>
-    <?php endif; ?>
     <form method="post">
       <div class="input-group">
         <label for="username">Username</label>

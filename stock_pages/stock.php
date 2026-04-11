@@ -1,35 +1,5 @@
 <?php
-$origin = [
-  'page' => 'stock',
-  'table' => 'stock',
-  'use_date' => 'quantity',
-  'search' => [
-    'int' => 'm.id',
-    'txt' => 's.name'
-  ],
-  'block' => [
-    'table' => 'categories',
-    'ali' => 't',
-    'column' => 'name',
-    'namis' => 'category',
-  ],
-  'columns' => [
-    'ID' => [false, 'm.id'],
-    'Product' => [true, 's.name', 'm.stock'],
-    'Category' => [true, 't.name', 's.products'],
-    'Quantity' => [false, 'm.quantity']
-  ],
-  'joins' => [
-    ['products', 's', 'm.product_id', 's.id'],
-    ['categories', 't', 's.cat_id', 't.id']
-  ]
-];
-
-$col_map = [];
-foreach ($origin['columns'] as $key => $arr) {
-  $col_map[$key] = $arr[1];
-}
-
+require('config.php');
 require('../components/header.php');
 require('../components/sidebar.php');
 require('../components/page_logic/func_compat.php');
@@ -77,6 +47,14 @@ require('../components/page_logic/func_compat.php');
       <div id="pagination-container">
         <a href="addstock.php" class="add-btn">
           <i class="bi bi-plus-circle"></i>Add
+        </a>
+        <?php
+        $export_params = $_GET;
+        $export_params['export'] = 'csv';
+        $export_url = 'export_stock.php?' . http_build_query($export_params);
+        ?>
+        <a href="<?= htmlspecialchars($export_url) ?>" class="export-btn">
+          <i class="bi bi-download"></i>Export
         </a>
         <?php
         if ($count > 0) {

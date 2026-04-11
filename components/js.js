@@ -1,3 +1,4 @@
+// get rur filename
 const curMainPath = window.location.pathname.split('/').pop();
 const fields = {
   'search': document.getElementById('search-bar'),
@@ -28,6 +29,7 @@ function buildParams() {
   return params;
 }
 
+// add event for each type
 fields['search']?.addEventListener('input', () => {
   if (fields['clear']) fields['clear'].style.display = fields['search'].value ? 'block' : 'none';
 });
@@ -47,6 +49,7 @@ fields['clear']?.addEventListener('click', () => {
 
 // some func for flexibility
 function move_batch(batch, per_page) {
+  // get link with param
   const params = new URLSearchParams(window.location.search);
   params.set('batch', batch);
   params.set('per_page', per_page);
