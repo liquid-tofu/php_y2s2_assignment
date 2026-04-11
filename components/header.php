@@ -1,18 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Management</title>
-  <link rel="icon" type="image/x-icon" href="/resources/Logo.ico">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="/styles/com.css">
-  <link rel="stylesheet" href="/styles/content.css">
-  <link rel="stylesheet" href="/styles/edit.css">
-  <link rel="stylesheet" href="/styles/add.css">
-</head>
-<body>
-
 <?php
 // prevent duplicate start
 if (session_status() === PHP_SESSION_NONE) {
@@ -59,3 +44,20 @@ if (isset($origin)) {
   require(__DIR__ . '/../components/page_logic/count_compat.php');
 }
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Management</title>
+  <link rel="icon" type="image/x-icon" href="/resources/Logo.ico">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/com.css">
+  <link rel="stylesheet" href="/styles/content.css">
+  <link rel="stylesheet" href="/styles/edit.css">
+  <link rel="stylesheet" href="/styles/add.css">
+</head>
+<body>
+
+
