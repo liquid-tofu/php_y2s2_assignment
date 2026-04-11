@@ -28,4 +28,3 @@ $col_map = [];
 foreach ($origin['columns'] as $key => $arr) {
   $col_map[$key] = $arr[1];
 }
-?>
