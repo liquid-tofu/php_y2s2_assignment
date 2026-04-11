@@ -1,4 +1,5 @@
 <?php
+ob_start();
 session_start();
 if (!isset($_SESSION['user_id'])) {
   header("Location: ../login.php");
@@ -42,12 +43,14 @@ $stmt->execute();
 $result = $stmt->get_result();
 $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 $filename = 'sales_orders_export_' . date('Ymd_His') . '.csv';
+ob_end_clean();
 
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 
 $out = fopen('php://output', 'w');
-fputcsv($out, array_merge(['#'], array_keys($origin['columns'])));
+$headers = array_column($origin['columns'], 0);
+fputcsv($out, array_merge(['#'], $headers));
 
 $i = 0;
 foreach ($rows as $row) {
