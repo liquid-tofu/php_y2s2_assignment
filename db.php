@@ -122,7 +122,6 @@ class stmt_compat {
   }
 }
 
-/*
 $conn = new mysqli_compat(
   'crossover.proxy.rlwy.net',
   'root',
@@ -130,9 +129,8 @@ $conn = new mysqli_compat(
   'railway',
   28023
 );
-*/
 
-/* temp */
+/* temp when using local
 $conn = new mysqli_compat(
   'localhost',
   'root',
@@ -140,6 +138,7 @@ $conn = new mysqli_compat(
   'stocking',
   3306
 );
+*/
 
 if($conn->connect_error){
   die("Connection Error: " . $conn->connect_error);
