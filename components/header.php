@@ -43,6 +43,7 @@ $batch      = isset($_GET['batch'])    ? (int)$_GET['batch']    : 1;
 if (isset($origin)) {
   require(__DIR__ . '/../components/page_logic/count_compat.php');
 }
+ob_end_clean();
 ?>
 
 <!DOCTYPE html>
