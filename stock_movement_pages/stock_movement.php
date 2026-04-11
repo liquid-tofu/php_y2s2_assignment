@@ -1,6 +1,5 @@
 <?php
 require('config.php');
-
 require('../components/header.php');
 require('../components/sidebar.php');
 require('../components/page_logic/func_compat.php');

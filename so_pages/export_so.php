@@ -49,8 +49,7 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 
 $out = fopen('php://output', 'w');
-$headers = array_column($origin['columns'], 0);
-fputcsv($out, array_merge(['#'], $headers));
+fputcsv($out, array_merge(['#'], array_keys($origin['columns'])));
 
 $i = 0;
 foreach ($rows as $row) {

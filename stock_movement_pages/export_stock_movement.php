@@ -44,9 +44,12 @@ $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 $filename = 'stock_movement_export_' . date('Ymd_His') . '.csv';
 
 header('Content-Type: text/csv; charset=utf-8');
+// tell the big guy to download
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 
+// write to the guy directly
 $out = fopen('php://output', 'w');
+// where what to write
 fputcsv($out, array_merge(['#'], array_keys($origin['columns'])));
 
 $i = 0;
@@ -56,7 +59,7 @@ foreach ($rows as $row) {
   foreach ($origin['columns'] as $values) {
     $col_key = $values[1];
     $value = $row[$col_key] ?? '';
-    if ($values[0] && !in_array($col_key, ['m.username', 'm.email', 'm.cus_email'], true)) {
+    if (!in_array($col_key, ['m.username', 'm.email', 'm.cus_email'], true)) {
       $value = ucwords(strtolower((string)$value));
     }
     $line[] = $value;
